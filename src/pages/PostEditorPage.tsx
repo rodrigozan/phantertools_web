@@ -10,6 +10,7 @@ import { Button, Card, ConfirmDialog, ErrorCard, Field, FormError, Input, PageHe
 import { ConversionTag, MediaThumb, Uploader, useMediaStatus } from '../components/media'
 import { LimitBanner, ReconnectBanners } from '../components/AccountBanners'
 import { useToast } from '../components/toast'
+import { publicationPending, publicationStatus, publicationMessage } from '../lib/publication'
 import { useBeforeUnload } from '../components/useDirtyGuard'
 
 const types: { v: PostType; l: string; hint: string }[] = [
@@ -39,7 +40,6 @@ export default function PostEditorPage() {
     return () => { mounted.current = false }
   }, [])
 
-  const [observedAt, setObservedAt] = useState(Date.now)
   const [post, setPost] = useState<Post | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [accountId, setAccountId] = useState('')
@@ -70,7 +70,6 @@ export default function PostEditorPage() {
       let items = lib.data
       if (id) {
         const r = await api.get<Post>(`/posts/${id}`)
-        setObservedAt(Date.now())
         setPost(r.data)
         setDestination(r.data.destination ?? 'instagram')
         setFacebookPageId(r.data.facebookPageId ?? '')
@@ -108,14 +107,14 @@ export default function PostEditorPage() {
   useMediaStatus(library, merge)
 
   const [statusUnavailable, setStatusUnavailable] = useState(false)
-  const activePublication = Boolean(post && (post.status === 'publishing' ||
-    (post.status === 'scheduled' && Date.parse(post.scheduledAt) <= observedAt)))
+  const activePublication = Boolean(post && publicationPending(post))
+  const watchPublication = post?.status === 'scheduled' || post?.status === 'publishing'
 
   const publicationId = post?.id
 
   // Only observation belongs to the page. Publishing stays in the server's durable queue.
   useEffect(() => {
-    if (!publicationId || !activePublication) return
+    if (!publicationId || !watchPublication) return
     let disposed = false
     let timer: ReturnType<typeof setTimeout>
     let fetching = false
@@ -126,7 +125,6 @@ export default function PostEditorPage() {
       try {
         const { data } = await api.get<Post>(`/posts/${publicationId}`)
         if (!disposed) {
-          setObservedAt(Date.now())
           setPost(data)
           setStatusUnavailable(false)
         }
@@ -134,7 +132,7 @@ export default function PostEditorPage() {
         if (!disposed) setStatusUnavailable(true)
       } finally {
         fetching = false
-        if (!disposed) timer = setTimeout(refresh, 2500)
+        if (!disposed) timer = setTimeout(refresh, activePublication ? 2500 : 5000)
       }
     }
     const resume = () => { if (document.visibilityState === 'visible') void refresh() }
@@ -147,10 +145,10 @@ export default function PostEditorPage() {
       window.removeEventListener('focus', resume)
       document.removeEventListener('visibilitychange', resume)
     }
-  }, [publicationId, activePublication])
+  }, [publicationId, watchPublication, activePublication])
 
   const locked = activePublication || (post && !['draft', 'scheduled', 'failed'].includes(post.status))
-  const lockReason = post?.status === 'published' ? 'Já publicada, não dá para editar.' : post?.status === 'publishing' ? 'Já em publicação, não dá para editar.' : post?.status === 'cancelled' ? 'Publicação cancelada.' : ''
+  const lockReason = post?.status === 'published' ? 'Já publicada, não dá para editar.' : activePublication ? 'O envio está em andamento. A edição será liberada se a publicação falhar.' : post?.status === 'cancelled' ? 'Publicação cancelada.' : ''
 
   const allowedKind = type === 'post' ? 'image' : type === 'reel' ? 'video' : null
   const maxItems = type === 'carousel' ? 10 : 1
@@ -216,20 +214,32 @@ export default function PostEditorPage() {
       if (!mounted.current) return
       setDirty(false)
       if (now) {
-        setObservedAt(Date.now())
-        setPost(r.data)
+        setPost({ ...r.data, publishRequestedAt: r.data.publishRequestedAt ?? new Date().toISOString() })
+        window.scrollTo({ top: 0 })
         navigate(`/publicacoes/${r.data.id}`, { replace: true })
         return
       }
       toast({
         tone: 'success',
-        text: status === 'draft' ? 'Rascunho salvo.' : now ? 'Publicando agora. Acompanhe o status na lista.' : `Agendado para ${formatDateTime(r.data.scheduledAt, tz)}.`,
+        text: status === 'draft' ? 'Rascunho salvo.' : `Agendado para ${formatDateTime(r.data.scheduledAt, tz)}.`,
         link: { to: `/publicacoes/${r.data.id}`, label: 'Ver' },
       })
       navigate('/publicacoes')
     } catch (err) {
       if (!mounted.current) return
       const e = errorInfo(err)
+      if (e.status === 409 && id) {
+        try {
+          const { data } = await api.get<Post>(`/posts/${id}`)
+          if (!mounted.current) return
+          setPost(data)
+          if (publicationPending(data) || data.status === 'published') {
+            setDirty(false)
+            window.scrollTo({ top: 0 })
+            return
+          }
+        } catch { /* Keep the original error if refreshing also fails. */ }
+      }
       setError({ message: e.message, fields: e.fields })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
@@ -267,7 +277,7 @@ export default function PostEditorPage() {
         title={isNew ? 'Nova publicação' : 'Editar publicação'}
         actions={
           <>
-            {post && <PostStatusTag status={post.status} />}
+            {post && <PostStatusTag status={publicationStatus(post)} />}
             {post?.fbPermalink && <a href={post.fbPermalink} target="_blank" rel="noreferrer" className="text-sm font-medium text-brand underline">Ver no Facebook</a>}
             {post?.permalink && (
               <a href={post.permalink} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1 text-sm font-medium text-brand underline">
@@ -282,23 +292,25 @@ export default function PostEditorPage() {
           <div role="status" aria-live="polite" className="flex items-center gap-3">
             <LoaderCircle size={20} className="animate-spin motion-reduce:animate-none text-brand" aria-hidden />
             <div>
-              <p className="font-medium">{saving === 'now' ? 'Enviando publicação…' : post?.nextAttemptAt ? 'Aguardando nova tentativa' : post?.status === 'publishing' ? 'Publicando nas redes selecionadas…' : 'Preparando publicação…'}</p>
+              <p className="font-medium">{saving === 'now' ? 'Enviando publicação…' : publicationMessage(post)}</p>
               <p className="mt-1 text-sm text-muted">{statusUnavailable
                 ? 'Não foi possível atualizar o status. Tentando reconectar; o processamento continua no servidor.'
-                : post?.nextAttemptAt
+                : post?.status === 'scheduled' && post.nextAttemptAt
                   ? `Próxima tentativa: ${formatDateTime(post.nextAttemptAt, tz)}. ${post.lastError ?? ''}`
                   : 'Você pode trocar de tela. Após o envio, a publicação continua no servidor.'}</p>
             </div>
           </div>
-          <progress aria-label="Progresso da publicação" className="mt-4 block h-2 w-full accent-[var(--accent)]" />
-          <p className="mt-2 text-xs text-muted">Aguardando confirmação das redes. O progresso é indeterminado.</p>
+          <div role="progressbar" aria-label="Progresso da publicação" aria-valuetext={publicationMessage(post)} className="publication-progress mt-4 h-2 overflow-hidden rounded-full bg-raised">
+            <div className="h-full w-1/3 rounded-full bg-brand" />
+          </div>
+          <p className="mt-2 text-xs text-muted">Aguardando confirmação das redes. O status é atualizado automaticamente.</p>
         </Card>
       )}
       {post?.status === 'published' && <p role="status" className="mb-4 rounded-control bg-raised px-4 py-3 text-sm">Publicação concluída. Use o link acima para ver nas redes.</p>}
       <ReconnectBanners />
       {destination !== 'facebook' && <LimitBanner accountId={accountId} />}
       {post?.status === 'failed' && post.lastError && <FormError message={`Falhou: ${post.lastError} Escolha um novo horário e salve para reagendar.`} />}
-      {locked && <p className="mb-4 rounded-control bg-raised px-3 py-2 text-sm text-muted">{lockReason}</p>}
+      {locked && !activePublication && <p className="mb-4 rounded-control bg-raised px-3 py-2 text-sm text-muted">{lockReason}</p>}
       <FormError message={error.message} />
 
       <fieldset disabled={Boolean(locked) || saving !== null} className="grid gap-4 lg:grid-cols-[1fr_360px]">

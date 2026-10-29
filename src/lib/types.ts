@@ -61,6 +61,9 @@ export type Post = {
   caption: string
   scheduledAt: string
   status: PostStatus
+  publishRequestedAt?: string
+  serverNow?: string
+  publicationStage?: string
   attempts: number
   nextAttemptAt?: string
   lastError?: string

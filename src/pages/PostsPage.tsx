@@ -1,3 +1,4 @@
+import { publicationStatus } from '../lib/publication'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CalendarDays, List, Plus } from 'lucide-react'
@@ -113,7 +114,7 @@ export default function PostsPage() {
                   <span className="w-20 text-sm text-muted">{typeLabel[p.type]}</span>
                   <span className="w-36 truncate text-sm text-muted">{p.destination === 'facebook' ? 'Facebook' : `@${accounts.find((a) => a.id === p.accountId)?.username ?? '—'}${p.destination === 'both' ? ' · Facebook' : ''}`}</span>
                   <span className="min-w-0 flex-1 truncate text-sm">{p.caption || <span className="text-faint">Sem legenda</span>}</span>
-                  <PostStatusTag status={p.status} />
+                  <PostStatusTag status={publicationStatus(p)} />
                 </Link>
               </li>
             ))}

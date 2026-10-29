@@ -129,6 +129,8 @@ export function Tag({ tone, children, icon }: { tone: TagTone; children: ReactNo
 const postStatus: Record<string, { tone: TagTone; label: string; Icon: typeof Clock }> = {
   draft: { tone: 'neutral', label: 'Rascunho', Icon: FileText },
   scheduled: { tone: 'brand', label: 'Agendado', Icon: CalendarClock },
+  queued: { tone: 'warning', label: 'Na fila de envio', Icon: Loader2 },
+  retrying: { tone: 'warning', label: 'Nova tentativa', Icon: Clock },
   publishing: { tone: 'warning', label: 'Publicando', Icon: Loader2 },
   published: { tone: 'success', label: 'Publicado', Icon: CheckCircle2 },
   failed: { tone: 'error', label: 'Falhou', Icon: AlertCircle },
