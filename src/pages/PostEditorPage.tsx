@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, ExternalLink, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ExternalLink, LoaderCircle, X } from 'lucide-react'
 import { api, errorInfo } from '../lib/api'
 import { useAccounts } from '../lib/accounts'
 import { useAuth } from '../lib/auth'
@@ -33,6 +33,13 @@ export default function PostEditorPage() {
   const navigate = useNavigate()
   const toast = useToast()
 
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+
+  const [observedAt, setObservedAt] = useState(Date.now)
   const [post, setPost] = useState<Post | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [accountId, setAccountId] = useState('')
@@ -63,6 +70,7 @@ export default function PostEditorPage() {
       let items = lib.data
       if (id) {
         const r = await api.get<Post>(`/posts/${id}`)
+        setObservedAt(Date.now())
         setPost(r.data)
         setDestination(r.data.destination ?? 'instagram')
         setFacebookPageId(r.data.facebookPageId ?? '')
@@ -99,7 +107,49 @@ export default function PostEditorPage() {
   const merge = useCallback((updated: MediaItem[]) => setLibrary((cur) => cur.map((m) => updated.find((u) => u.id === m.id) ?? m)), [])
   useMediaStatus(library, merge)
 
-  const locked = post && !['draft', 'scheduled', 'failed'].includes(post.status)
+  const [statusUnavailable, setStatusUnavailable] = useState(false)
+  const activePublication = Boolean(post && (post.status === 'publishing' ||
+    (post.status === 'scheduled' && Date.parse(post.scheduledAt) <= observedAt)))
+
+  const publicationId = post?.id
+
+  // Only observation belongs to the page. Publishing stays in the server's durable queue.
+  useEffect(() => {
+    if (!publicationId || !activePublication) return
+    let disposed = false
+    let timer: ReturnType<typeof setTimeout>
+    let fetching = false
+    const refresh = async () => {
+      if (fetching || disposed) return
+      clearTimeout(timer)
+      fetching = true
+      try {
+        const { data } = await api.get<Post>(`/posts/${publicationId}`)
+        if (!disposed) {
+          setObservedAt(Date.now())
+          setPost(data)
+          setStatusUnavailable(false)
+        }
+      } catch {
+        if (!disposed) setStatusUnavailable(true)
+      } finally {
+        fetching = false
+        if (!disposed) timer = setTimeout(refresh, 2500)
+      }
+    }
+    const resume = () => { if (document.visibilityState === 'visible') void refresh() }
+    void refresh()
+    window.addEventListener('focus', resume)
+    document.addEventListener('visibilitychange', resume)
+    return () => {
+      disposed = true
+      clearTimeout(timer)
+      window.removeEventListener('focus', resume)
+      document.removeEventListener('visibilitychange', resume)
+    }
+  }, [publicationId, activePublication])
+
+  const locked = activePublication || (post && !['draft', 'scheduled', 'failed'].includes(post.status))
   const lockReason = post?.status === 'published' ? 'Já publicada, não dá para editar.' : post?.status === 'publishing' ? 'Já em publicação, não dá para editar.' : post?.status === 'cancelled' ? 'Publicação cancelada.' : ''
 
   const allowedKind = type === 'post' ? 'image' : type === 'reel' ? 'video' : null
@@ -147,6 +197,7 @@ export default function PostEditorPage() {
   )
 
   const submit = async (status: 'scheduled' | 'draft' | 'now') => {
+    if (saving || activePublication) return
     setSaving(status)
     setError({ fields: {} })
     const now = status === 'now'
@@ -162,7 +213,14 @@ export default function PostEditorPage() {
     }
     try {
       const r = isNew ? await api.post<Post>('/posts', body) : await api.patch<Post>(`/posts/${id}`, body)
+      if (!mounted.current) return
       setDirty(false)
+      if (now) {
+        setObservedAt(Date.now())
+        setPost(r.data)
+        navigate(`/publicacoes/${r.data.id}`, { replace: true })
+        return
+      }
       toast({
         tone: 'success',
         text: status === 'draft' ? 'Rascunho salvo.' : now ? 'Publicando agora. Acompanhe o status na lista.' : `Agendado para ${formatDateTime(r.data.scheduledAt, tz)}.`,
@@ -170,11 +228,12 @@ export default function PostEditorPage() {
       })
       navigate('/publicacoes')
     } catch (err) {
+      if (!mounted.current) return
       const e = errorInfo(err)
       setError({ message: e.message, fields: e.fields })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
-      setSaving(null)
+      if (mounted.current) setSaving(null)
     }
   }
 
@@ -218,13 +277,31 @@ export default function PostEditorPage() {
           </>
         }
       />
+      {(saving === 'now' || activePublication) && (
+        <Card className="mb-4 p-5">
+          <div role="status" aria-live="polite" className="flex items-center gap-3">
+            <LoaderCircle size={20} className="animate-spin motion-reduce:animate-none text-brand" aria-hidden />
+            <div>
+              <p className="font-medium">{saving === 'now' ? 'Enviando publicação…' : post?.nextAttemptAt ? 'Aguardando nova tentativa' : post?.status === 'publishing' ? 'Publicando nas redes selecionadas…' : 'Preparando publicação…'}</p>
+              <p className="mt-1 text-sm text-muted">{statusUnavailable
+                ? 'Não foi possível atualizar o status. Tentando reconectar; o processamento continua no servidor.'
+                : post?.nextAttemptAt
+                  ? `Próxima tentativa: ${formatDateTime(post.nextAttemptAt, tz)}. ${post.lastError ?? ''}`
+                  : 'Você pode trocar de tela. Após o envio, a publicação continua no servidor.'}</p>
+            </div>
+          </div>
+          <progress aria-label="Progresso da publicação" className="mt-4 block h-2 w-full accent-[var(--accent)]" />
+          <p className="mt-2 text-xs text-muted">Aguardando confirmação das redes. O progresso é indeterminado.</p>
+        </Card>
+      )}
+      {post?.status === 'published' && <p role="status" className="mb-4 rounded-control bg-raised px-4 py-3 text-sm">Publicação concluída. Use o link acima para ver nas redes.</p>}
       <ReconnectBanners />
       {destination !== 'facebook' && <LimitBanner accountId={accountId} />}
       {post?.status === 'failed' && post.lastError && <FormError message={`Falhou: ${post.lastError} Escolha um novo horário e salve para reagendar.`} />}
       {locked && <p className="mb-4 rounded-control bg-raised px-3 py-2 text-sm text-muted">{lockReason}</p>}
       <FormError message={error.message} />
 
-      <fieldset disabled={Boolean(locked)} className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      <fieldset disabled={Boolean(locked) || saving !== null} className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card className="flex flex-col gap-4 p-5">
           <Field label="Publicar em" error={error.fields.destination}>
             {(fid, d) => <Select id={fid} aria-describedby={d} value={destination} onChange={(e) => (touch(), setDestination(e.target.value as PostDestination))}>
@@ -360,7 +437,7 @@ export default function PostEditorPage() {
             Voltar
           </Button>
           {!isNew && !locked && (
-            <Button variant="danger" onClick={() => setCancelOpen(true)}>
+            <Button variant="danger" disabled={saving !== null} onClick={() => setCancelOpen(true)}>
               Cancelar publicação
             </Button>
           )}
