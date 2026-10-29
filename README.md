@@ -1,6 +1,9 @@
 # Phanter Tools web
 
 Frontend React estático. A Hostinger executa `yarn build` e publica `dist/`.
+O arquivo `public/.htaccess` é copiado para `dist/` e faz o fallback das rotas
+React para `index.html` na Hostinger, inclusive ao recarregar ou abrir links diretos.
+
 O navegador acessa diretamente a API HTTPS existente no VPS:
 `https://phanterai.tailc5aaf7.ts.net:10000/ig/api`.
 Não há servidor Node nem proxy de produção no frontend.
