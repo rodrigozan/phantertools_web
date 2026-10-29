@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: env.VITE_BASE_PATH || '/',
     plugins: [react(), tailwindcss()],
+    define: {
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || (mode === 'production' ? 'https://phanterai.tailc5aaf7.ts.net:10000/ig/api' : '')),
+    },
     server: {
       proxy: {
         '/api': 'http://127.0.0.1:3930',

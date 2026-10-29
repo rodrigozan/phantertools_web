@@ -1,37 +1,25 @@
 # Phanter Tools web
 
-## Produção — phantertools.com
+Frontend React estático. A Hostinger executa `yarn build` e publica `dist/`.
+O navegador acessa diretamente a API HTTPS existente no VPS:
+`https://phanterai.tailc5aaf7.ts.net:10000/ig/api`.
+Não há servidor Node nem proxy de produção no frontend.
 
-`npm run build` gera o frontend na raiz (`/`). Execute `npm start` para servir
-`dist/` e encaminhar `/api/*` e `/public/*` para a API no VPS. A porta vem de
-`PORT`; `API_UPSTREAM_URL` define o backend (padrão: o Funnel existente em
-`https://phanterai.tailc5aaf7.ts.net:10000/ig`). Não coloque segredos em variáveis
-`VITE_*`: elas são incluídas no JavaScript público.
+O build padrão usa `/` e a URL acima. `VITE_BASE_PATH` e `VITE_API_BASE_URL`
+podem sobrescrever os valores durante o build. Não coloque chaves em `VITE_*`.
+Para o painel interno: `VITE_BASE_PATH=/ig/ VITE_API_BASE_URL=/ig/api yarn build`.
 
-Na Hostinger, use uma aplicação **Node.js**, build `npm run build`, entrada
-`server.mjs`, com os arquivos fonte e `dist` disponíveis no runtime. O modo Vite
-estático com apenas `dist` resolve os assets, mas não executa o proxy de API.
-Mantenha o deploy automático ligado ao branch `master`.
+Na API do VPS:
 
-Na API, configure `PUBLIC_BASE_URL=https://phantertools.com` e reinicie o serviço.
-O cookie de sessão passa a usar `/`. Login, callbacks OAuth e mídia pública usam
-esse domínio; não é necessário CORS nem cookies de terceiros.
+- `PUBLIC_BASE_URL=https://phanterai.tailc5aaf7.ts.net:10000/ig` (API, mídia e callbacks OAuth)
+- `FRONTEND_BASE_URL=https://phantertools.com` (retorno após login e conexão de contas)
+- `CORS_ALLOWED_ORIGINS=https://phantertools.com,https://www.phantertools.com`
 
-Cadastre também nos provedores OAuth as URLs autorizadas:
+Axios usa `withCredentials`. A API permite apenas as origens configuradas e
+usa cookies HttpOnly, Secure e SameSite=None quando o frontend está em outra
+origem. Navegadores que bloqueiam cookies de terceiros podem impedir a sessão
+entre phantertools.com e o domínio ts.net; um domínio da API sob phantertools.com
+no mesmo VPS resolve essa restrição sem adicionar outro servidor.
 
-- `https://phantertools.com/api/auth/google/callback`
-- `https://phantertools.com/api/auth/facebook/callback`
-- `https://phantertools.com/api/instagram/callback`
-- `https://phantertools.com/api/analysis/facebook/callback`
-
-O webhook da Meta pode continuar no Funnel existente; se migrar, use
-`https://phantertools.com/api/webhooks/instagram`.
-
-## Desenvolvimento e painel legado
-
-`npm run dev` encaminha `/api`, `/public`, `/ig/api` e `/ig/public` para
-`http://127.0.0.1:3930`. Para gerar o painel servido pelo backend em `/ig/`, use
-`VITE_BASE_PATH=/ig/ npm run build`. O build padrão é o da Hostinger na raiz.
-
-`npm test` valida os assets, fallback do roteador e proxy de cookies, uploads e
-redirecionamentos sem chamar serviços externos.
+As URLs de callback dos provedores continuam na API do VPS, por exemplo
+`https://phanterai.tailc5aaf7.ts.net:10000/ig/api/auth/google/callback`.
