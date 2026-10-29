@@ -1,6 +1,9 @@
 import axios, { AxiosError } from 'axios'
 
-export const api = axios.create({ baseURL: '/ig/api', withCredentials: true })
+export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || `${import.meta.env.BASE_URL}api`).replace(/\/$/, '')
+export const apiUrl = (path: string) => `${apiBaseUrl}/${path.replace(/^\//, '')}`
+
+export const api = axios.create({ baseURL: apiBaseUrl, withCredentials: true })
 
 export type ApiErrorBody = { error: string; message: string; fields?: Record<string, string> }
 

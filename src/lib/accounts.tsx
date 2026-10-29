@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { api } from './api'
+import { api, apiUrl } from './api'
 import { useAuth } from './auth'
 import type { Account } from './types'
 
@@ -33,4 +33,4 @@ export function AccountsProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={{ accounts, loading, error, reload }}>{children}</Ctx.Provider>
 }
 
-export const connectUrl = '/ig/api/instagram/connect'
+export const connectUrl = apiUrl('/instagram/connect')

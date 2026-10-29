@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BarChart3, Link2, Plus, RefreshCw, Trash2 } from 'lucide-react'
@@ -149,7 +150,7 @@ export default function AnalysisPage() {
             <Banner
               tone="warning"
               action={
-                <a href="/ig/api/analysis/facebook/connect" className="inline-flex h-9 items-center gap-2 rounded-control border border-control px-3.5 text-sm font-medium hover:bg-raised">
+                <a href={apiUrl('/analysis/facebook/connect')} className="inline-flex h-9 items-center gap-2 rounded-control border border-control px-3.5 text-sm font-medium hover:bg-raised">
                   <Link2 size={16} aria-hidden /> Conectar Facebook
                 </a>
               }

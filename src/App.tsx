@@ -61,7 +61,7 @@ function RequireAdmin({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter basename="/ig">
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
       <AuthProvider>
         <ToastProvider>
           <SessionWatcher />

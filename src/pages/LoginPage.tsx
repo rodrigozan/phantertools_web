@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api'
 import { AppBrand } from '../components/AppBrand'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
@@ -58,10 +59,10 @@ export default function LoginPage() {
           </div>
         )}
         <div className="flex flex-col gap-3">
-          <a className={btn} href={`/ig/api/auth/google${q}`}>
+          <a className={btn} href={apiUrl(`/auth/google${q}`)}>
             <GoogleIcon /> Entrar com Google
           </a>
-          <a className={btn} href={`/ig/api/auth/facebook${q}`}>
+          <a className={btn} href={apiUrl(`/auth/facebook${q}`)}>
             <FacebookIcon /> Entrar com Facebook
           </a>
         </div>

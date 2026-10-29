@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api'
 import { useMemo, useState } from 'react'
 import { BarChart3, Link2, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { api, errorInfo } from '../lib/api'
@@ -79,7 +80,7 @@ export default function AnalysisFacebookTab() {
   if (error || !data) return <ErrorCard message={error ?? undefined} onRetry={reload} />
 
   const connectLink = (
-    <a href="/ig/api/analysis/facebook/connect" className="inline-flex h-9 items-center gap-2 rounded-control border border-control px-3.5 text-sm font-medium hover:bg-raised">
+    <a href={apiUrl('/analysis/facebook/connect')} className="inline-flex h-9 items-center gap-2 rounded-control border border-control px-3.5 text-sm font-medium hover:bg-raised">
       <Link2 size={16} aria-hidden /> Conectar Facebook
     </a>
   )
