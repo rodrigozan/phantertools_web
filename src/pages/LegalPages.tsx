@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AppBrand } from '../components/AppBrand'
 import { APP_NAME } from '../lib/appConfig'
+import { useAuth } from '../lib/auth'
 
 const controller = 'PhanterAI Creative Agency'
 const privacyEmail = 'atendimento@phanterai.com'
@@ -17,6 +18,8 @@ function DocumentSection({ title, children }: { title: string; children: ReactNo
 
 function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
   const appName = APP_NAME || 'Phanter Tools'
+  const { user, loading } = useAuth()
+  const destination = user ? '/configuracoes' : '/login'
 
   useEffect(() => {
     document.title = `${title} | ${appName}`
@@ -29,12 +32,14 @@ function LegalLayout({ title, children }: { title: string; children: ReactNode }
     <main className="min-h-screen px-4 py-8 md:px-8 md:py-12">
       <div className="mx-auto max-w-3xl">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
-          <Link to="/login" aria-label={`${appName} — entrar`}>
+          <Link to={destination} aria-label={`${appName} — ${user ? 'voltar para configurações' : 'entrar'}`}>
             <AppBrand />
           </Link>
-          <Link to="/login" className="text-sm font-medium text-brand-ink underline">
-            Entrar
-          </Link>
+          {!loading && (
+            <Link to={destination} className="text-sm font-medium text-brand-ink underline">
+              {user ? 'Voltar' : 'Entrar'}
+            </Link>
+          )}
         </header>
         <article className="py-8">
           <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
