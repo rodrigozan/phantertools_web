@@ -1,6 +1,6 @@
 import { apiUrl } from '../lib/api'
 import { AppBrand } from '../components/AppBrand'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { ThemeSwitcher } from '../components/ThemeSwitcher'
@@ -71,6 +71,14 @@ export default function LoginPage() {
       <div className="mt-6">
         <ThemeSwitcher />
       </div>
+      <nav aria-label="Documentos legais" className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+        <Link to="/termos-de-servico" className="text-brand-ink underline">
+          Termos de Serviço
+        </Link>
+        <Link to="/politica-de-privacidade" className="text-brand-ink underline">
+          Política de Privacidade
+        </Link>
+      </nav>
     </main>
   )
 }

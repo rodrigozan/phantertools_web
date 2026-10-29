@@ -8,6 +8,7 @@ import { ToastProvider } from './components/toast'
 import { Layout } from './components/Layout'
 import { Skeleton } from './components/ui'
 import LoginPage from './pages/LoginPage'
+import { PrivacyPage, TermsPage } from './pages/LegalPages'
 import { ForbiddenPage, NotFoundPage } from './pages/ErrorPages'
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
@@ -67,6 +68,8 @@ export default function App() {
           <SessionWatcher />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/termos-de-servico" element={<TermsPage />} />
+            <Route path="/politica-de-privacidade" element={<PrivacyPage />} />
             <Route
               element={
                 <RequireAuth>

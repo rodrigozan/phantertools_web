@@ -8,6 +8,11 @@ O navegador acessa diretamente a API HTTPS existente no VPS:
 `https://phanterai.tailc5aaf7.ts.net:10000/ig/api`.
 Não há servidor Node nem proxy de produção no frontend.
 
+As páginas públicas de Termos de Serviço e Política de Privacidade ficam em
+`/termos-de-servico` e `/politica-de-privacidade`. Elas não exigem login; seus
+endereços são exibidos em Configurações. Endpoints de callback e de exclusão
+de dados não são publicados nessas páginas.
+
 O build padrão usa `/` e a URL acima. `VITE_BASE_PATH` e `VITE_API_BASE_URL`
 podem sobrescrever os valores durante o build. Não coloque chaves em `VITE_*`.
 Para o painel interno: `VITE_BASE_PATH=/ig/ VITE_API_BASE_URL=/ig/api yarn build`.

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useHref, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { api, errorInfo } from '../lib/api'
 import { timezones } from '../lib/format'
@@ -25,6 +25,10 @@ export default function SettingsPage() {
   const { user, setUser } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  const termsPath = useHref('/termos-de-servico')
+  const privacyPath = useHref('/politica-de-privacidade')
+  const termsUrl = new URL(termsPath, window.location.origin).toString()
+  const privacyUrl = new URL(privacyPath, window.location.origin).toString()
   const [name, setName] = useState(user?.name ?? '')
   const [tz, setTz] = useState(user?.timezone ?? 'America/Sao_Paulo')
   const [schedule, setSchedule] = useState<WeekdayTimes[]>(user?.defaultSchedule ?? [])
@@ -130,6 +134,27 @@ export default function SettingsPage() {
 
       <Section title="Tema" description="A escolha fica salva neste navegador.">
         <ThemeSwitcher />
+      </Section>
+
+      <Section title="Documentos públicos" description="Links abertos, acessíveis sem entrar no painel.">
+        <dl className="space-y-5">
+          <div>
+            <dt className="font-medium">Termos de Serviço</dt>
+            <dd className="mt-1 break-all">
+              <a href={termsPath} target="_blank" rel="noreferrer" className="text-brand-ink underline">
+                {termsUrl}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium">Política de Privacidade</dt>
+            <dd className="mt-1 break-all">
+              <a href={privacyPath} target="_blank" rel="noreferrer" className="text-brand-ink underline">
+                {privacyUrl}
+              </a>
+            </dd>
+          </div>
+        </dl>
       </Section>
 
       <Section title="Excluir conta" description="Apaga na hora tudo o que é seu: contas conectadas, mídias, publicações, automações e conversas.">
