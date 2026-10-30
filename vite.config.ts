@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_BASE_PATH || '/',
     plugins: [react(), tailwindcss()],
     define: {
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || (mode === 'production' ? 'https://phanterai.tailc5aaf7.ts.net:10000/ig/api' : '')),
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || (mode === 'production' ? 'https://api.phantertools.com/ig/api' : '')),
     },
     server: {
       proxy: {
