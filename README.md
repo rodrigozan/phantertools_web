@@ -5,7 +5,7 @@ O arquivo `public/.htaccess` é copiado para `dist/` e faz o fallback das rotas
 React para `index.html` na Hostinger, inclusive ao recarregar ou abrir links diretos.
 
 O navegador acessa diretamente a API HTTPS existente no VPS:
-`https://api.phantertools.com/ig/api`.
+`https://api.phantertools.com/api`.
 Não há servidor Node nem proxy de produção no frontend.
 
 As páginas públicas de Termos de Serviço e Política de Privacidade ficam em
@@ -19,7 +19,7 @@ Para o painel interno: `VITE_BASE_PATH=/ig/ VITE_API_BASE_URL=/ig/api yarn build
 
 Na API do VPS:
 
-- `PUBLIC_BASE_URL=https://api.phantertools.com/ig` (API, mídia e callbacks OAuth)
+- `PUBLIC_BASE_URL=https://api.phantertools.com` (API, mídia e callbacks OAuth)
 - `FRONTEND_BASE_URL=https://phantertools.com` (retorno após login e conexão de contas)
 - `CORS_ALLOWED_ORIGINS=https://phantertools.com,https://www.phantertools.com`
 
@@ -30,4 +30,4 @@ seja do mesmo site e funcione em navegadores que bloqueiam cookies de terceiros.
 O MongoDB escuta somente em 127.0.0.1:27017 e não deve ser exposto na rede pública.
 
 As URLs de callback dos provedores continuam na API do VPS, por exemplo
-`https://api.phantertools.com/ig/api/auth/google/callback`.
+`https://api.phantertools.com/api/auth/google/callback`.
