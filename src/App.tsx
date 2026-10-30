@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import { AuthProvider, useAuth } from './lib/auth'
 import { NotificationsProvider } from './lib/notifications'
 import { AccountsProvider } from './lib/accounts'
+import { YoutubeChannelsProvider } from './lib/youtubeChannels'
 import { setUnauthorizedHandler } from './lib/api'
 import { ToastProvider } from './components/toast'
 import { Layout } from './components/Layout'
@@ -18,6 +19,9 @@ const AccountsPage = lazy(() => import('./pages/AccountsPage'))
 const MediaPage = lazy(() => import('./pages/MediaPage'))
 const PostsPage = lazy(() => import('./pages/PostsPage'))
 const PostEditorPage = lazy(() => import('./pages/PostEditorPage'))
+const VideosPage = lazy(() => import('./pages/VideosPage'))
+const VideoEditorPage = lazy(() => import('./pages/VideoEditorPage'))
+const VideoDetailPage = lazy(() => import('./pages/VideoDetailPage'))
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 const AnalysisPage = lazy(() => import('./pages/AnalysisPage'))
 const BatchesPage = lazy(() => import('./pages/BatchesPage'))
@@ -75,7 +79,9 @@ export default function App() {
                 <RequireAuth>
                   <NotificationsProvider>
                     <AccountsProvider>
-                      <Layout />
+                      <YoutubeChannelsProvider>
+                        <Layout />
+                      </YoutubeChannelsProvider>
                     </AccountsProvider>
                   </NotificationsProvider>
                 </RequireAuth>
@@ -94,6 +100,10 @@ export default function App() {
               <Route path="automacoes/nova" element={<AutomationEditorPage />} />
               <Route path="automacoes/:id" element={<AutomationDetailPage />} />
               <Route path="automacoes/:id/editar" element={<AutomationEditorPage key="edit" />} />
+              <Route path="videos" element={<VideosPage />} />
+              <Route path="videos/novo" element={<VideoEditorPage />} />
+              <Route path="videos/:id" element={<VideoDetailPage />} />
+              <Route path="videos/:id/editar" element={<VideoEditorPage key="edit" />} />
               <Route path="analise" element={<AnalysisPage />} />
               <Route path="avisos" element={<NotificationsPage />} />
               <Route path="configuracoes" element={<SettingsPage />} />

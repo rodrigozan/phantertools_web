@@ -2,7 +2,7 @@ import { AppBrand } from './AppBrand'
 import { APP_NAME } from '../lib/appConfig'
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, Bell, CalendarDays, Images, Camera, LayoutDashboard, Layers, LogOut, Menu, MessageCircle, Settings, Shield, WifiOff, X } from 'lucide-react'
+import { BarChart3, Bell, CalendarDays, Clapperboard, Images, LayoutDashboard, Layers, Link2, LogOut, Menu, MessageCircle, Settings, Shield, WifiOff, X } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { NotificationBell } from './NotificationBell'
@@ -11,18 +11,37 @@ import { Skeleton } from './ui'
 
 type NavItem = { to: string; label: string; Icon: typeof Bell; admin?: boolean }
 
-export const navItems: NavItem[] = [
-  { to: '/', label: 'Painel', Icon: LayoutDashboard },
-  { to: '/publicacoes', label: 'Publicações', Icon: CalendarDays },
-  { to: '/lotes', label: 'Lotes', Icon: Layers },
-  { to: '/midias', label: 'Mídias', Icon: Images },
-  { to: '/automacoes', label: 'Automações de DM', Icon: MessageCircle },
-  { to: '/analise', label: 'Análise de perfis', Icon: BarChart3 },
-  { to: '/contas', label: 'Contas do Instagram', Icon: Camera },
-  { to: '/avisos', label: 'Avisos', Icon: Bell },
-  { to: '/configuracoes', label: 'Configurações', Icon: Settings },
-  { to: '/admin', label: 'Admin', Icon: Shield, admin: true },
+type NavGroup = { title?: string; items: NavItem[] }
+
+export const navGroups: NavGroup[] = [
+  {
+    items: [
+      { to: '/', label: 'Painel', Icon: LayoutDashboard },
+      { to: '/midias', label: 'Mídias', Icon: Images },
+      { to: '/avisos', label: 'Avisos', Icon: Bell },
+    ],
+  },
+  {
+    title: 'Instagram',
+    items: [
+      { to: '/publicacoes', label: 'Publicações', Icon: CalendarDays },
+      { to: '/lotes', label: 'Lotes', Icon: Layers },
+      { to: '/automacoes', label: 'Automações de DM', Icon: MessageCircle },
+      { to: '/analise', label: 'Análise de perfis', Icon: BarChart3 },
+    ],
+  },
+  { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }] },
+  {
+    title: 'Geral',
+    items: [
+      { to: '/contas', label: 'Contas', Icon: Link2 },
+      { to: '/configuracoes', label: 'Configurações', Icon: Settings },
+      { to: '/admin', label: 'Admin', Icon: Shield, admin: true },
+    ],
+  },
 ]
+
+export const navItems: NavItem[] = navGroups.flatMap((g) => g.items)
 
 function useOnline() {
   const [online, setOnline] = useState(() => navigator.onLine)
@@ -43,28 +62,35 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth()
   return (
     <nav aria-label="Principal" className="flex flex-col gap-0.5">
-      {navItems
-        .filter((i) => !i.admin || user?.role === 'admin')
-        .map(({ to, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              `group flex h-[34px] max-md:h-11 items-center gap-2.5 rounded-control px-2.5 text-sm ${
-                isActive ? 'bg-nav-active-bg font-medium text-nav-active-text' : 'text-nav-text hover:text-ink'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={16} aria-hidden className={isActive ? 'text-nav-icon-active' : ''} />
-                {label}
-              </>
-            )}
-          </NavLink>
-        ))}
+      {navGroups.map((g, gi) => {
+        const items = g.items.filter((i) => !i.admin || user?.role === 'admin')
+        if (!items.length) return null
+        return (
+          <div key={gi} className={g.title ? 'mt-4' : ''}>
+            {g.title && <p className="px-2.5 pb-1 text-xs text-faint">{g.title}</p>}
+            {items.map(({ to, label, Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  `group flex h-[34px] max-md:h-11 items-center gap-2.5 rounded-control px-2.5 text-sm ${
+                    isActive ? 'bg-nav-active-bg font-medium text-nav-active-text' : 'text-nav-text hover:text-ink'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon size={16} aria-hidden className={isActive ? 'text-nav-icon-active' : ''} />
+                    {label}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        )
+      })}
     </nav>
   )
 }

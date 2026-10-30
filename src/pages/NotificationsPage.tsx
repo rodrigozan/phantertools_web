@@ -12,12 +12,19 @@ const meta: Record<string, { label: string; Icon: typeof AlertCircle; tone: 'err
   token_expiring: { label: 'Conta a reconectar', Icon: KeyRound, tone: 'warning' },
   limit_near: { label: 'Perto do limite', Icon: AlertTriangle, tone: 'warning' },
   dm_failed: { label: 'DM falhou', Icon: MessageCircleWarning, tone: 'error' },
+  youtube_failed: { label: 'Envio ao YouTube falhou', Icon: AlertCircle, tone: 'error' },
+  youtube_token_expired: { label: 'Canal a reconectar', Icon: KeyRound, tone: 'error' },
+  youtube_quota_near: { label: 'Cota do YouTube', Icon: AlertTriangle, tone: 'warning' },
 }
 
 export function notificationLink(n: Notification) {
   if (n.type === 'publish_failed' && n.refId) return `/publicacoes/${n.refId}`
   if (n.type === 'dm_failed' && n.refId) return `/automacoes/${n.refId}`
-  if (n.type === 'token_expiring' || n.type === 'limit_near') return '/contas'
+  if (n.type === 'youtube_failed' && n.refId) return `/videos/${n.refId}`
+  if (n.type === 'youtube_quota_near') return '/videos'
+  if (n.type === 'youtube_token_expired') return '/contas?aba=youtube'
+  if (n.type === 'token_expiring') return '/contas?aba=instagram'
+  if (n.type === 'limit_near') return '/contas?aba=instagram'
   return null
 }
 
@@ -37,7 +44,7 @@ export function NotificationRow({ n, onRead, onDelete, compact }: { n: Notificat
         <p className="mt-1 text-sm">{n.message}</p>
         {link && (
           <Link to={link} onClick={onRead} className="mt-1 inline-block text-sm font-medium text-brand underline">
-            {n.type === 'publish_failed' ? 'Reagendar' : 'Abrir'}
+            {n.type === 'publish_failed' ? 'Reagendar' : n.type === 'youtube_token_expired' ? 'Reconectar' : 'Abrir'}
           </Link>
         )}
       </div>

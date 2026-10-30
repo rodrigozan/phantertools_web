@@ -14,8 +14,6 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': 'http://127.0.0.1:3930',
         '/public': 'http://127.0.0.1:3930',
-        '/ig/api': 'http://127.0.0.1:3930',
-        '/ig/public': 'http://127.0.0.1:3930',
       },
     },
   }

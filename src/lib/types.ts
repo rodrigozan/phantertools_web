@@ -27,6 +27,7 @@ export type Account = {
 }
 
 export type MediaItem = {
+  purpose?: 'instagram' | 'youtube'
   id: string
   kind: 'video' | 'image'
   originalName: string
@@ -175,4 +176,63 @@ export type PageOverview = {
   facebook: { configured: boolean; connected: boolean }
   own: { pageId: string; name: string; analysis: ProfileAnalysis | null; error: string | null }[]
   competitors: ProfileAnalysis[]
+}
+
+export type YoutubeChannel = {
+  id: string
+  channelId: string
+  title: string
+  handle?: string
+  thumbnailUrl?: string
+  status: 'connected' | 'expired' | 'revoked'
+  defaultLanguage?: string
+  defaultCategoryId?: string
+  connectedAt: string
+}
+
+export type YoutubeStatus = 'draft' | 'queued' | 'uploading' | 'processing' | 'scheduled' | 'published' | 'failed' | 'cancelled'
+export type YoutubePrivacy = 'private' | 'unlisted' | 'public'
+export type YoutubeFormat = 'long' | 'short'
+
+export type YoutubeVideo = {
+  id: string
+  channelId: string
+  channelTitle?: string
+  mediaId?: string
+  thumbnailMediaId?: string
+  format?: YoutubeFormat
+  title: string
+  description: string
+  tags: string[]
+  categoryId?: string
+  language?: string
+  madeForKids?: boolean
+  privacyStatus?: YoutubePrivacy
+  publishAt?: string
+  status: YoutubeStatus
+  stage?: string
+  progress?: number
+  attempts: number
+  lastError?: string
+  youtubeVideoId?: string
+  youtubeUrl?: string
+  thumbnailUrl?: string
+  thumbnailStatus?: 'none' | 'pending' | 'applied' | 'failed'
+  thumbnailError?: string
+  uploadedAt?: string
+  source: 'ui' | 'agent' | 'legacy'
+  serverNow?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type YoutubeQuota = {
+  used: number
+  limit: number
+  uploadsUsed: number
+  uploadsLimit: number
+  remainingUploads: number
+  near: boolean
+  full: boolean
+  resetsAt: string
 }

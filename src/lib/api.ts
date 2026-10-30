@@ -30,3 +30,6 @@ export function errorInfo(err: unknown): { status: number; message: string; fiel
     fields: e.response.data?.fields ?? {},
   }
 }
+
+// Endereço absoluto de um arquivo servido pela API (ex.: /public/media/<token>), que pode estar em outro domínio.
+export const apiFileUrl = (path: string) => new URL(path, new URL(apiBaseUrl, window.location.href)).href
