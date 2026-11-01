@@ -30,7 +30,7 @@ export const navGroups: NavGroup[] = [
       { to: '/analise', label: 'Análise de perfis', Icon: BarChart3 },
     ],
   },
-  { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }] },
+  { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }, { to: '/semana-automatica', label: 'Semana automática', Icon: CalendarDays, admin: true }, { to: '/automacoes-telegram', label: 'Telegram → YouTube', Icon: MessageCircle, admin: true }] },
   {
     title: 'Geral',
     items: [
@@ -120,7 +120,7 @@ export function Layout({ children }: { children?: ReactNode }) {
   const [open, setOpen] = useState(false)
   const online = useOnline()
   const location = useLocation()
-  const current = navItems.find((i) => (i.to === '/' ? location.pathname === '/' : location.pathname.startsWith(i.to)))
+  const current = navItems.find((i) => (i.to === '/' ? location.pathname === '/' : location.pathname === i.to || location.pathname.startsWith(`${i.to}/`)))
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''

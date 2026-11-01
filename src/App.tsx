@@ -12,6 +12,8 @@ import LoginPage from './pages/LoginPage'
 import { PrivacyPage, TermsPage } from './pages/LegalPages'
 import { ForbiddenPage, NotFoundPage } from './pages/ErrorPages'
 
+const TelegramAutomationsPage = lazy(() => import('./pages/TelegramAutomationsPage'))
+const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
@@ -100,6 +102,8 @@ export default function App() {
               <Route path="automacoes/nova" element={<AutomationEditorPage />} />
               <Route path="automacoes/:id" element={<AutomationDetailPage />} />
               <Route path="automacoes/:id/editar" element={<AutomationEditorPage key="edit" />} />
+              <Route path="semana-automatica" element={<RequireAdmin><WeeklyPage /></RequireAdmin>} />
+              <Route path="automacoes-telegram" element={<RequireAdmin><TelegramAutomationsPage /></RequireAdmin>} />
               <Route path="videos" element={<VideosPage />} />
               <Route path="videos/novo" element={<VideoEditorPage />} />
               <Route path="videos/:id" element={<VideoDetailPage />} />

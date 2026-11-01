@@ -220,7 +220,7 @@ export type YoutubeVideo = {
   thumbnailStatus?: 'none' | 'pending' | 'applied' | 'failed'
   thumbnailError?: string
   uploadedAt?: string
-  source: 'ui' | 'agent' | 'legacy'
+  source: 'ui' | 'agent' | 'legacy' | 'telegram' | 'weekly'
   serverNow?: string
   createdAt: string
   updatedAt: string
