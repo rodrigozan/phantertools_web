@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Download, Pencil, Plus, RotateCcw, X } from 'lucide-react'
+import { Download, Music, Pencil, Plus, RotateCcw, X } from 'lucide-react'
 import { api, errorInfo } from '../lib/api'
 import { useFetch } from '../lib/useFetch'
 import { useAccounts } from '../lib/accounts'
@@ -15,6 +15,8 @@ type Automation = {
   id: string
   name: string
   sources: string[]
+  driveFolders: string[]
+  musicDriveFolder?: string
   channelId: string
   instagramAccountId?: string
   slotTimes: string[]
@@ -27,6 +29,8 @@ type Automation = {
 }
 type Status = {
   telegramConfigured: boolean
+  driveConfigured: boolean
+  driveServiceEmail?: string
   audioToolsReady: boolean
   musicCount: number
   musicDir: string
@@ -80,7 +84,7 @@ const dayLabel = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { ti
 const hourLabel = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })
 const weekLabel = (w: string) => `Semana de ${w.split('-').reverse().slice(0, 2).join('/')}`
 
-const emptyForm = { name: 'Semana automática', sources: '', channelId: '', instagramAccountId: '', slotTimes: ['08:00', '12:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
+const emptyForm = { name: 'Semana automática', sources: '', driveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['08:00', '12:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
 
 export default function WeeklyPage() {
   const { user } = useAuth()
@@ -117,7 +121,7 @@ function Weekly() {
   function edit(a?: Automation) {
     setForm(
       a
-        ? { name: a.name, sources: a.sources.join('\n'), channelId: a.channelId, instagramAccountId: a.instagramAccountId ?? '', slotTimes: a.slotTimes, runTime: a.runTime, musicVolumePct: a.musicVolumePct, active: a.active }
+        ? { name: a.name, sources: a.sources.join('\n'), driveFolders: a.driveFolders.join('\n'), musicDriveFolder: a.musicDriveFolder ?? '', channelId: a.channelId, instagramAccountId: a.instagramAccountId ?? '', slotTimes: a.slotTimes, runTime: a.runTime, musicVolumePct: a.musicVolumePct, active: a.active }
         : emptyForm,
     )
     setFields({})
@@ -130,6 +134,8 @@ function Weekly() {
     const body = {
       name: form.name,
       sources: form.sources.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean),
+      driveFolders: form.driveFolders.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean),
+      musicDriveFolder: form.musicDriveFolder.trim() || null,
       channelId: form.channelId,
       instagramAccountId: form.instagramAccountId || null,
       slotTimes: form.slotTimes,
@@ -165,6 +171,19 @@ function Weekly() {
       setBusy(false)
     }
   }
+  async function syncMusic() {
+    if (!automation) return
+    setBusy(true)
+    try {
+      const r = await api.post<{ downloaded: number; total: number }>(`/weekly/automations/${automation.id}/sync-music`, {})
+      await status.reload()
+      toast({ tone: 'success', text: `${r.data.downloaded} música(s) nova(s) baixada(s). Biblioteca com ${r.data.total}.` })
+    } catch (err) {
+      toast({ tone: 'error', text: errorInfo(err).message })
+    } finally {
+      setBusy(false)
+    }
+  }
   async function retry(id: string) {
     try {
       await api.post(`/weekly/items/${id}/retry`, {})
@@ -191,6 +210,11 @@ function Weekly() {
         actions={
           automation && (
             <div className="flex gap-2">
+              {automation.musicDriveFolder && (
+                <Button icon={<Music size={16} />} disabled={busy} onClick={syncMusic}>
+                  Sincronizar músicas
+                </Button>
+              )}
               <Button icon={<Pencil size={16} />} onClick={() => edit(automation)}>
                 Configurar
               </Button>
@@ -207,13 +231,17 @@ function Weekly() {
           <ul className="mt-1 list-disc pl-5 text-sm text-muted">
             {!s.telegramConfigured && <li>Sessão do Telegram não configurada.</li>}
             {!s.audioToolsReady && <li>Ferramentas de áudio (Demucs e Whisper) não encontradas em tools/venv.</li>}
-            {s.musicCount === 0 && <li>A biblioteca de músicas está vazia. Coloque arquivos de áudio em {s.musicDir}.</li>}
+            {s.musicCount === 0 && <li>A biblioteca de músicas está vazia. Coloque arquivos de áudio em {s.musicDir} ou configure a pasta de músicas do Drive e use “Sincronizar músicas”.</li>}
           </ul>
         </Card>
+      )}
+      {s?.driveConfigured && s.driveServiceEmail && (
+        <p className="mb-3 text-sm text-muted">Para o Drive, compartilhe as pastas (Leitor) com <span className="break-all font-medium">{s.driveServiceEmail}</span>.</p>
       )}
       {s && (
         <div className="mb-5 flex flex-wrap gap-2 text-sm">
           <Tag tone={s.telegramConfigured ? 'success' : 'error'}>Telegram {s.telegramConfigured ? 'configurado' : 'pendente'}</Tag>
+          <Tag tone={s.driveConfigured ? 'success' : 'neutral'}>Google Drive {s.driveConfigured ? 'configurado' : 'não configurado'}</Tag>
           <Tag tone={s.audioToolsReady ? 'success' : 'error'}>Ferramentas de áudio {s.audioToolsReady ? 'prontas' : 'ausentes'}</Tag>
           <Tag tone={s.musicCount ? 'success' : 'error'}>{s.musicCount} música(s) na biblioteca</Tag>
         </div>
@@ -226,8 +254,14 @@ function Weekly() {
             <Field label="Nome" error={fields.name}>
               {(id) => <Input id={id} required maxLength={100} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />}
             </Field>
-            <Field label="Canais do Telegram" hint="Um por linha: @canal ou ID -100…. Entram os vídeos postados nos últimos 7 dias." error={fields.sources}>
-              {(id) => <Textarea id={id} required rows={3} value={form.sources} onChange={(e) => setForm({ ...form, sources: e.target.value })} />}
+            <Field label="Canais do Telegram" hint="Um por linha: @canal ou ID -100…. Entram os vídeos postados nos últimos 7 dias. Use este campo e/ou as pastas do Drive." error={fields.sources}>
+              {(id) => <Textarea id={id} rows={3} value={form.sources} onChange={(e) => setForm({ ...form, sources: e.target.value })} />}
+            </Field>
+            <Field label="Pastas do Google Drive com vídeos" hint="Um link ou ID por linha. Entram os vídeos ainda não usados, do mais antigo ao mais novo. Compartilhe cada pasta (Leitor) com a conta de serviço." error={fields.driveFolders}>
+              {(id) => <Textarea id={id} rows={3} placeholder="https://drive.google.com/drive/folders/…" value={form.driveFolders} onChange={(e) => setForm({ ...form, driveFolders: e.target.value })} />}
+            </Field>
+            <Field label="Pasta do Google Drive com músicas" hint="Opcional. As músicas novas são copiadas para a biblioteca antes de cada preparação da semana." error={fields.musicDriveFolder}>
+              {(id) => <Input id={id} placeholder="https://drive.google.com/drive/folders/…" value={form.musicDriveFolder} onChange={(e) => setForm({ ...form, musicDriveFolder: e.target.value })} />}
             </Field>
             <Field label="Canal do YouTube" error={fields.channelId}>
               {(id) => (
@@ -292,7 +326,7 @@ function Weekly() {
         <>
           <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-muted">
             <Tag tone={automation.active ? 'success' : 'neutral'}>{automation.active ? 'Ativa' : 'Pausada'}</Tag>
-            <span>{automation.sources.join(', ')} → {channelName(automation.channelId)}{automation.instagramAccountId ? ' + Instagram' : ''}</span>
+            <span>{[...automation.sources, ...automation.driveFolders.map(() => 'Google Drive')].join(', ')} → {channelName(automation.channelId)}{automation.instagramAccountId ? ' + Instagram' : ''}</span>
             <span>Música a {automation.musicVolumePct}%</span>
             {automation.lastRunAt && <span>Última preparação: {new Date(automation.lastRunAt).toLocaleString('pt-BR', { timeZone: TZ })}</span>}
           </div>
