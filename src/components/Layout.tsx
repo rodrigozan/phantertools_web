@@ -31,6 +31,12 @@ export const navGroups: NavGroup[] = [
     ],
   },
   { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }, { to: '/semana-automatica', label: 'Semana automática', Icon: CalendarDays, admin: true }, { to: '/automacoes-telegram', label: 'Telegram → YouTube', Icon: MessageCircle, admin: true }] },
+  { title: 'Quiz Factory', items: [
+    { to: '/quiz', label: 'Visão geral', Icon: LayoutDashboard },
+    { to: '/quiz/producoes', label: 'Produções', Icon: Clapperboard },
+    { to: '/quiz/configuracao', label: 'Configuração do quiz', Icon: Settings },
+    { to: '/quiz/templates', label: 'Template', Icon: Layers },
+  ] },
   {
     title: 'Geral',
     items: [
@@ -72,7 +78,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               <NavLink
                 key={to}
                 to={to}
-                end={to === '/'}
+                end={to === '/' || to === '/quiz'}
                 onClick={onNavigate}
                 className={({ isActive }) =>
                   `group flex h-[34px] max-md:h-11 items-center gap-2.5 rounded-control px-2.5 text-sm ${
@@ -120,7 +126,7 @@ export function Layout({ children }: { children?: ReactNode }) {
   const [open, setOpen] = useState(false)
   const online = useOnline()
   const location = useLocation()
-  const current = navItems.find((i) => (i.to === '/' ? location.pathname === '/' : location.pathname === i.to || location.pathname.startsWith(`${i.to}/`)))
+  const current = navItems.find((i) => (i.to === '/' || i.to === '/quiz' ? location.pathname === i.to : location.pathname === i.to || location.pathname.startsWith(`${i.to}/`)))
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''

@@ -250,13 +250,14 @@ export default function VideoDetailPage() {
             <a href={v.youtubeUrl} target="_blank" rel="noreferrer" className="inline-flex h-9 max-md:min-h-11 items-center gap-2 rounded-control border border-control px-3.5 text-sm font-medium hover:bg-raised">
               <ExternalLink size={16} aria-hidden /> Ver no YouTube
             </a>
-          ) : v.status === 'queued' ? (
+          ) : v.status === 'queued' && v.source !== 'quiz' ? (
             <Button variant="danger" onClick={() => setConfirm('discard')}>Cancelar envio</Button>
           ) : v.status === 'draft' ? (
             <Button variant="primary" icon={<Pencil size={14} aria-hidden />} onClick={() => navigate(`/videos/${v.id}/editar`)}>Continuar editando</Button>
           ) : undefined
         }
       />
+      {v.source === 'quiz' && <div className="mb-4 rounded-card border border-card-border p-4 text-sm"><p>Este envio é gerenciado pela Quiz Factory. Resultados incertos não podem ser reenviados por esta tela.</p><Link className="mt-2 inline-block text-brand underline" to={`/quiz/producoes/${v.quizProductionId}`}>Abrir produção do quiz</Link></div>}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <YtStatusTag s={v.status} />
         <FormatTag f={v.format} />
@@ -286,7 +287,7 @@ export default function VideoDetailPage() {
                 </p>
               </>
             )}
-            {v.status === 'failed' && !interrupted && (
+            {v.status === 'failed' && !interrupted && v.source !== 'quiz' && (
               <div className="mt-4 flex flex-col gap-4">
                 <Notice tone="error">{v.lastError ?? 'O envio falhou. Nada foi enviado ao canal.'}</Notice>
                 <div className="flex flex-wrap gap-2">
@@ -297,7 +298,7 @@ export default function VideoDetailPage() {
                 <p className="text-xs text-muted">Tentar de novo só aparece porque o vídeo não chegou ao YouTube.</p>
               </div>
             )}
-            {interrupted && (
+            {interrupted && v.source !== 'quiz' && (
               <div className="mt-4 flex flex-col gap-4">
                 <Notice tone="warning">O envio foi interrompido quando o servidor reiniciou. Pode ser que o vídeo já tenha chegado ao canal.</Notice>
                 <p className="text-sm">Confira no YouTube Studio antes de enviar de novo, para não duplicar o vídeo.</p>

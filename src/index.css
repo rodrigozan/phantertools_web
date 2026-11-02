@@ -146,3 +146,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .publication-progress > div { animation: none; margin-inline: auto; }
 }
+
+/* Quiz inherits the app palette and DM Sans; compensate for the existing 14px rem base locally. */
+.quiz-workspace .text-sm { font-size: 14px; }
+.quiz-workspace .text-xs { font-size: 12px; }
+.quiz-workspace .text-2xl { font-size: 24px; }
+.quiz-workspace h2 { font-size: 16px; }
+@media (max-width: 767px) {
+  .quiz-workspace { padding-inline: 2px; }
+  .quiz-workspace button, .quiz-workspace input, .quiz-workspace select { min-height: 44px; }
+}

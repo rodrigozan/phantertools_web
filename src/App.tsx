@@ -12,6 +12,11 @@ import LoginPage from './pages/LoginPage'
 import { PrivacyPage, TermsPage } from './pages/LegalPages'
 import { ForbiddenPage, NotFoundPage } from './pages/ErrorPages'
 
+const QuizDashboardPage = lazy(() => import('./pages/QuizDashboardPage'))
+const QuizSettingsPage = lazy(() => import('./pages/QuizSettingsPage'))
+const QuizProductionsPage = lazy(() => import('./pages/QuizProductionsPage'))
+const QuizProductionDetailPage = lazy(() => import('./pages/QuizProductionDetailPage'))
+const QuizTemplatePage = lazy(() => import('./pages/QuizTemplatePage'))
 const TelegramAutomationsPage = lazy(() => import('./pages/TelegramAutomationsPage'))
 const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
@@ -89,6 +94,11 @@ export default function App() {
                 </RequireAuth>
               }
             >
+              <Route path="quiz" element={<div className="quiz-workspace"><QuizDashboardPage /></div>} />
+              <Route path="quiz/configuracao" element={<div className="quiz-workspace"><QuizSettingsPage /></div>} />
+              <Route path="quiz/producoes" element={<div className="quiz-workspace"><QuizProductionsPage /></div>} />
+              <Route path="quiz/producoes/:id" element={<div className="quiz-workspace"><QuizProductionDetailPage /></div>} />
+              <Route path="quiz/templates" element={<div className="quiz-workspace"><QuizTemplatePage /></div>} />
               <Route index element={<DashboardPage />} />
               <Route path="contas" element={<AccountsPage />} />
               <Route path="midias" element={<MediaPage />} />

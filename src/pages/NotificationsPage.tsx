@@ -8,6 +8,7 @@ import { Button, Card, EmptyState, ErrorCard, PageHeader, SkeletonList, Tag } fr
 import { useToast } from '../components/toast'
 
 const meta: Record<string, { label: string; Icon: typeof AlertCircle; tone: 'error' | 'warning' }> = {
+  quiz_alert: { label: 'Quiz Factory requer atenção', Icon: AlertTriangle, tone: 'warning' },
   publish_failed: { label: 'Publicação falhou', Icon: AlertCircle, tone: 'error' },
   token_expiring: { label: 'Conta a reconectar', Icon: KeyRound, tone: 'warning' },
   limit_near: { label: 'Perto do limite', Icon: AlertTriangle, tone: 'warning' },
@@ -18,6 +19,7 @@ const meta: Record<string, { label: string; Icon: typeof AlertCircle; tone: 'err
 }
 
 export function notificationLink(n: Notification) {
+  if (n.type === 'quiz_alert') return n.refId ? `/quiz/producoes/${n.refId}` : '/quiz'
   if (n.type === 'publish_failed' && n.refId) return `/publicacoes/${n.refId}`
   if (n.type === 'dm_failed' && n.refId) return `/automacoes/${n.refId}`
   if (n.type === 'youtube_failed' && n.refId) return `/videos/${n.refId}`
