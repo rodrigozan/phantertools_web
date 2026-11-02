@@ -20,6 +20,7 @@ import {
   Textarea,
   Toggle,
 } from '../components/ui'
+import { TelegramConnection } from '../components/TelegramConnection'
 import { ForbiddenPage } from './ErrorPages'
 
 type Automation = {
@@ -74,7 +75,6 @@ export default function TelegramAutomationsPage() {
 }
 function TelegramAutomations() {
   const { data, loading, error, reload } = useFetch<Automation[]>('/telegram/automations')
-  const { data: connection } = useFetch<{ configured: boolean }>('/telegram/status')
   const { channels } = useYoutubeChannels()
   const toast = useToast()
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -169,15 +169,7 @@ function TelegramAutomations() {
           </Button>
         }
       />
-      {connection && !connection.configured && (
-        <Card className="mb-5 p-4">
-          <p className="font-medium">Configure a conexão no servidor</p>
-          <p className="mt-1 text-sm text-muted">
-            A sessão do Telegram ainda não foi configurada. Você pode preparar as automações; as verificações começam após configurar e
-            reiniciar a API.
-          </p>
-        </Card>
-      )}
+      <TelegramConnection />
       {creating && (
         <Card className="mb-6 p-5">
           <h2 className="mb-4 text-lg font-semibold">{editingId ? 'Editar automação' : 'Nova automação'}</h2>
