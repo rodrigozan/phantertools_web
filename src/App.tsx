@@ -26,6 +26,7 @@ const AccountsPage = lazy(() => import('./pages/AccountsPage'))
 const MediaPage = lazy(() => import('./pages/MediaPage'))
 const PostsPage = lazy(() => import('./pages/PostsPage'))
 const PostEditorPage = lazy(() => import('./pages/PostEditorPage'))
+const YoutubeAnalyticsPage = lazy(() => import('./pages/YoutubeAnalyticsPage'))
 const VideosPage = lazy(() => import('./pages/VideosPage'))
 const VideoEditorPage = lazy(() => import('./pages/VideoEditorPage'))
 const VideoDetailPage = lazy(() => import('./pages/VideoDetailPage'))
@@ -114,6 +115,7 @@ export default function App() {
               <Route path="automacoes/:id/editar" element={<AutomationEditorPage key="edit" />} />
               <Route path="semana-automatica" element={<RequireAdmin><WeeklyPage /></RequireAdmin>} />
               <Route path="automacoes-telegram" element={<RequireAdmin><TelegramAutomationsPage /></RequireAdmin>} />
+              <Route path="youtube/analises" element={<YoutubeAnalyticsPage />} />
               <Route path="videos" element={<VideosPage />} />
               <Route path="videos/novo" element={<VideoEditorPage />} />
               <Route path="videos/:id" element={<VideoDetailPage />} />

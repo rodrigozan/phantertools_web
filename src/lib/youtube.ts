@@ -70,3 +70,61 @@ export function stageLabel(stage?: string) {
 }
 
 export const tzLabel = (tz: string) => (tz === 'America/Sao_Paulo' ? 'Horário de Brasília' : tz)
+
+export type YtChannelTotals = {
+  views: number
+  minutesWatched: number
+  avgViewDurationSec: number
+  avgViewPercentage: number
+  subscribersGained: number
+  subscribersLost: number
+  likes: number
+  comments: number
+  shares: number
+}
+export type YtChannelStats = { subscribers: number | null; views: number; videos: number; checkedAt?: string }
+export type YtAnalyticsOverview = {
+  enabled: boolean
+  intervalHours: number
+  needsReconnect: string[]
+  channels: {
+    id: string
+    channelId: string
+    title: string
+    handle: string | null
+    thumbnailUrl: string | null
+    status: string
+    analyticsScope: boolean
+    analyticsStatus: 'ok' | 'missing_scope' | 'unavailable' | null
+    stats: YtChannelStats | null
+    windowDays: number
+    totals: YtChannelTotals | null
+    videosTracked: number
+    videoViews: number
+    checkedAt: string | null
+  }[]
+}
+export type YtChannelAnalytics = {
+  channel: { id: string; title: string; handle: string | null; analyticsScope: boolean }
+  stats: YtChannelStats | null
+  windowDays: number
+  totals: YtChannelTotals | null
+  analyticsStatus: string | null
+  daily: { day: string; views: number; minutes: number; subs: number }[]
+  checkedAt: string | null
+  videos: {
+    id: string
+    title: string
+    format: 'long' | 'short' | null
+    source: string
+    publishedAt: string
+    views: number
+    likes: number
+    comments: number
+    missing: boolean
+    viewsDelta: number | null
+    avgViewPercentage: number | null
+    avgViewDurationSec: number | null
+    hasRetention: boolean
+  }[]
+}

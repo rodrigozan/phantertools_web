@@ -30,7 +30,7 @@ export const navGroups: NavGroup[] = [
       { to: '/analise', label: 'Análise de perfis', Icon: BarChart3 },
     ],
   },
-  { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }, { to: '/semana-automatica', label: 'Semana automática', Icon: CalendarDays, admin: true }, { to: '/automacoes-telegram', label: 'Telegram → YouTube', Icon: MessageCircle, admin: true }] },
+  { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }, { to: '/youtube/analises', label: 'Análises', Icon: BarChart3 }, { to: '/semana-automatica', label: 'Semana automática', Icon: CalendarDays, admin: true }, { to: '/automacoes-telegram', label: 'Telegram → YouTube', Icon: MessageCircle, admin: true }] },
   { title: 'Quiz Factory', items: [
     { to: '/quiz', label: 'Visão geral', Icon: LayoutDashboard },
     { to: '/quiz/producoes', label: 'Produções', Icon: Clapperboard },

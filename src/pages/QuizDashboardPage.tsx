@@ -1,4 +1,5 @@
 import { QuizBoundary, ProductionRows } from '../components/quiz'
+import { QuizMetricsPanel } from '../components/QuizMetricsPanel'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Card, EmptyState, PageHeader } from '../components/ui'
@@ -114,6 +115,7 @@ export default function QuizDashboardPage() {
                 </div>
               ))}
             </dl>
+            <QuizMetricsPanel />
             <section>
               <div className="mb-2 flex justify-between">
                 <h2 className="font-semibold">Últimas produções</h2>

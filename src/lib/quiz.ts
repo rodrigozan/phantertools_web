@@ -127,3 +127,37 @@ export async function quizAction(url: string, body: unknown = {}) {
     throw new Error(errorInfo(err).message)
   }
 }
+export type QuizMetricVideo = {
+  productionId: string
+  topic: string | null
+  localDate: string
+  publishedAt: string | null
+  youtubeStatus: string | null
+  remoteVideoId: string
+  views: number
+  likes: number
+  comments: number
+  checkedAt: string | null
+  missing: boolean
+  history: { at: string; views: number; likes: number; comments: number }[]
+  analytics: {
+    status: 'ok' | 'missing_scope' | 'unavailable'
+    checkedAt: string | null
+    minutesWatched: number | null
+    avgViewDurationSec: number | null
+    avgViewPercentage: number | null
+    subscribersGained: number | null
+    shares: number | null
+    hasRetention: boolean
+  } | null
+}
+export type QuizRetention = { checkedAt: string | null; points: { ratio: number; watch: number }[] }
+export type QuizMetrics = {
+  enabled: boolean
+  intervalHours: number
+  totals: { videos: number; views: number; likes: number; comments: number; avgViews: number; likeRate: number | null }
+  analyticsScope: boolean
+  analyticsTotals: { videos: number; avgViewPercentage: number | null; avgViewDurationSec: number | null }
+  lastCheckedAt: string | null
+  videos: QuizMetricVideo[]
+}
