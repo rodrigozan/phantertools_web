@@ -109,7 +109,7 @@ function InstagramTab() {
                   <Tag tone="warning">Precisa reconectar</Tag>
                 )}
                 <div className="flex gap-2">
-                  {a.status !== 'connected' && <ConnectButton label="Reconectar" primary={false} />}
+                  <ConnectButton label="Reconectar" primary={a.status !== 'connected'} />
                   <Button variant="danger" onClick={() => setRemoving(a)}>
                     Desconectar
                   </Button>
@@ -157,7 +157,7 @@ function YoutubeConnect({ label = 'Conectar canal', primary = true }: { label?: 
       href={youtubeConnectUrl}
       className={`inline-flex h-9 max-md:min-h-11 items-center gap-2 rounded-control px-3.5 text-sm font-medium ${primary ? 'bg-primary text-on-primary hover:opacity-90' : 'border border-control text-ink hover:bg-raised'}`}
     >
-      {primary && <Plus size={16} aria-hidden />} {label}
+      {primary && label !== 'Reconectar' && <Plus size={16} aria-hidden />} {label}
     </a>
   )
 }
@@ -248,13 +248,12 @@ function YoutubeTab() {
                       </Tag>
                     )}
                     <div className="flex gap-2">
-                      {ok ? (
+                      {ok && (
                         <Button loading={checking === c.id} onClick={() => check(c)}>
                           Verificar conexão
                         </Button>
-                      ) : (
-                        <YoutubeConnect label="Reconectar" />
                       )}
+                      <YoutubeConnect label="Reconectar" primary={!ok} />
                       <Button variant="danger" onClick={() => setRemoving(c)}>
                         Desconectar
                       </Button>
@@ -324,6 +323,9 @@ function FacebookTab() {
               <Tag tone="success" icon={<CheckCircle2 size={12} aria-hidden />}>
                 Conectada
               </Tag>
+              <a href={apiUrl('/analysis/facebook/connect')} className="inline-flex h-9 max-md:min-h-11 items-center gap-2 rounded-control border border-control px-3.5 text-sm font-medium text-ink hover:bg-raised">
+                Reconectar
+              </a>
             </li>
           ))}
         </ul>
