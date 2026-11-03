@@ -7,6 +7,7 @@ import { useYoutubeChannels } from '../lib/youtubeChannels'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../components/toast'
 import { Button, Card, EmptyState, ErrorCard, Field, Input, PageHeader, Select, SkeletonList, Tag, Textarea, Toggle } from '../components/ui'
+import { DriveFolderField } from '../components/DriveFolderField'
 import { DriveMusicLibrary } from '../components/DriveMusicLibrary'
 import { TelegramConnection } from '../components/TelegramConnection'
 import { ForbiddenPage } from './ErrorPages'
@@ -33,7 +34,7 @@ type Automation = {
 type Status = {
   telegramConfigured: boolean
   driveConfigured: boolean
-  driveServiceEmail?: string
+  driveConnected: boolean
   audioToolsReady: boolean
   musicCount: number
   musicFiles: string[]
@@ -249,13 +250,10 @@ function Weekly() {
           </ul>
         </Card>
       )}
-      {s?.driveConfigured && s.driveServiceEmail && (
-        <p className="mb-3 text-sm text-muted">Para o Drive, compartilhe as pastas (Leitor) com <span className="break-all font-medium">{s.driveServiceEmail}</span>.</p>
-      )}
       {s && (
         <div className="mb-5 flex flex-wrap gap-2 text-sm">
           <Tag tone={s.telegramConfigured ? 'success' : 'error'}>Telegram {s.telegramConfigured ? 'configurado' : 'pendente'}</Tag>
-          <Tag tone={s.driveConfigured ? 'success' : 'neutral'}>Google Drive {s.driveConfigured ? 'configurado' : 'não configurado'}</Tag>
+          <Tag tone={s.driveConnected ? 'success' : 'neutral'}>Google Drive {s.driveConnected ? 'conectado' : 'desconectado'}</Tag>
           <Tag tone={s.audioToolsReady ? 'success' : 'error'}>Ferramentas de áudio {s.audioToolsReady ? 'prontas' : 'ausentes'}</Tag>
           <Tag tone={s.musicCount ? 'success' : 'error'}>{s.musicCount} música(s) na biblioteca</Tag>
         </div>
@@ -275,11 +273,11 @@ function Weekly() {
               <Toggle checked={form.includeHistory} label="Importar vídeos antigos do Telegram" onChange={value => setForm({ ...form, includeHistory: value })} />
               <span className="text-sm">Importar também os vídeos antigos</span>
             </div>
-            <Field label="Pastas do Google Drive com vídeos" hint="Um link ou ID por linha. Entram os vídeos ainda não usados, do mais antigo ao mais novo. Compartilhe cada pasta (Leitor) com a conta de serviço." error={fields.driveFolders}>
-              {(id) => <Textarea id={id} rows={3} placeholder="https://drive.google.com/drive/folders/…" value={form.driveFolders} onChange={(e) => setForm({ ...form, driveFolders: e.target.value })} />}
+            <Field label="Pastas do Google Drive com vídeos" hint="Escolha as pastas da conta Google conectada. Os vídeos ainda não usados entram do mais antigo ao mais novo." error={fields.driveFolders}>
+              {() => <DriveFolderField values={form.driveFolders.split('\n').filter(Boolean)} onChange={values => setForm({ ...form, driveFolders: values.join('\n') })} />}
             </Field>
-            <Field label="Pasta do Google Drive com músicas" hint="Opcional. As músicas novas são copiadas para a biblioteca antes de cada preparação da semana." error={fields.musicDriveFolder}>
-              {(id) => <Input id={id} placeholder="https://drive.google.com/drive/folders/…" value={form.musicDriveFolder} onChange={(e) => setForm({ ...form, musicDriveFolder: e.target.value })} />}
+            <Field label="Pasta de músicas" hint="As músicas desta pasta serão sincronizadas antes da preparação dos vídeos." error={fields.musicDriveFolder}>
+              {() => <DriveFolderField single values={form.musicDriveFolder ? [form.musicDriveFolder] : []} onChange={values => setForm({ ...form, musicDriveFolder: values[0] ?? '' })} />}
             </Field>
             <Field label="Canal do YouTube" error={fields.channelId}>
               {(id) => (
