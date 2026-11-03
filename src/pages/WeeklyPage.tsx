@@ -7,6 +7,8 @@ import { useYoutubeChannels } from '../lib/youtubeChannels'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../components/toast'
 import { Button, Card, EmptyState, ErrorCard, Field, Input, PageHeader, Select, SkeletonList, Tag, Textarea, Toggle } from '../components/ui'
+import { DriveMusicLibrary } from '../components/DriveMusicLibrary'
+import { TelegramConnection } from '../components/TelegramConnection'
 import { ForbiddenPage } from './ErrorPages'
 
 const TZ = 'America/Sao_Paulo'
@@ -16,6 +18,7 @@ type Automation = {
   name: string
   sources: string[]
   driveFolders: string[]
+  includeHistory?: boolean
   musicDriveFolder?: string
   channelId: string
   instagramAccountId?: string
@@ -33,7 +36,7 @@ type Status = {
   driveServiceEmail?: string
   audioToolsReady: boolean
   musicCount: number
-  musicDir: string
+  musicFiles: string[]
   nextWeekStart: string
 }
 type Item = {
@@ -43,6 +46,14 @@ type Item = {
   caption?: string
   status: string
   error?: string
+  titleEvidence?: string
+  transcript?: string
+  description?: string
+  hashtags?: string[]
+  keywords?: string[]
+  instagramTitle?: string
+  instagramDescription?: string
+  instagramHashtags?: string[]
   title?: string
   slotAt?: string
   musicFile?: string
@@ -59,7 +70,7 @@ const stages: Record<string, [string, Tone]> = {
   separating: ['Separando voz e música', 'warning'],
   mixing: ['Misturando a música', 'warning'],
   transcribing: ['Transcrevendo a fala', 'warning'],
-  analyzing: ['Codex criando o título', 'warning'],
+  analyzing: ['Analisando conteúdo e criando textos', 'warning'],
   scheduling: ['Agendando', 'warning'],
   scheduled: ['Agendado', 'brand'],
   uploading: ['Enviando ao YouTube', 'warning'],
@@ -69,10 +80,10 @@ const stages: Record<string, [string, Tone]> = {
   skipped: ['Ignorado', 'neutral'],
 }
 const ytLabels: Record<string, string> = {
-  queued: 'na fila', uploading: 'enviando', processing: 'processando', scheduled: 'agendado', published: 'publicado', failed: 'falhou', cancelled: 'cancelado',
+  queued: 'na fila', uploading: 'enviando', processing: 'processando', scheduled: 'agendado', uploaded: 'enviado privado', published: 'publicado', failed: 'falhou', cancelled: 'cancelado',
 }
 const igLabels: Record<string, string> = {
-  scheduled: 'agendado', publishing: 'publicando', published: 'publicado', failed: 'falhou', cancelled: 'cancelado', draft: 'rascunho',
+  scheduled: 'agendado', publishing: 'publicando', uploaded: 'enviado privado', published: 'publicado', failed: 'falhou', cancelled: 'cancelado', draft: 'rascunho',
 }
 
 function StatusTag({ status }: { status: string }) {
@@ -84,7 +95,7 @@ const dayLabel = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { ti
 const hourLabel = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })
 const weekLabel = (w: string) => `Semana de ${w.split('-').reverse().slice(0, 2).join('/')}`
 
-const emptyForm = { name: 'Semana automática', sources: '', driveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['08:00', '12:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
+const emptyForm = { name: 'Semana automática', sources: '', includeHistory: true, driveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['07:00', '12:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
 
 export default function WeeklyPage() {
   const { user } = useAuth()
@@ -121,7 +132,7 @@ function Weekly() {
   function edit(a?: Automation) {
     setForm(
       a
-        ? { name: a.name, sources: a.sources.join('\n'), driveFolders: a.driveFolders.join('\n'), musicDriveFolder: a.musicDriveFolder ?? '', channelId: a.channelId, instagramAccountId: a.instagramAccountId ?? '', slotTimes: a.slotTimes, runTime: a.runTime, musicVolumePct: a.musicVolumePct, active: a.active }
+        ? { name: a.name, sources: a.sources.join('\n'), includeHistory: a.includeHistory ?? true, driveFolders: a.driveFolders.join('\n'), musicDriveFolder: a.musicDriveFolder ?? '', channelId: a.channelId, instagramAccountId: a.instagramAccountId ?? '', slotTimes: a.slotTimes, runTime: a.runTime, musicVolumePct: a.musicVolumePct, active: a.active }
         : emptyForm,
     )
     setFields({})
@@ -133,6 +144,7 @@ function Weekly() {
     setFields({})
     const body = {
       name: form.name,
+      includeHistory: form.includeHistory,
       sources: form.sources.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean),
       driveFolders: form.driveFolders.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean),
       musicDriveFolder: form.musicDriveFolder.trim() || null,
@@ -205,8 +217,8 @@ function Weekly() {
   return (
     <div>
       <PageHeader
-        title="Semana automática"
-        description="Todo domingo, baixa os vídeos do Telegram, troca a música de fundo por uma da biblioteca, cria título e legenda com o Codex e agenda 3 por dia, de segunda a domingo, no YouTube e no Instagram."
+        title="Integração Telegram"
+        description="Transcrição, análise, textos para cada rede e suas músicas. Três vídeos por dia no Instagram e no YouTube, às 7h, 12h e 20h (Brasília)."
         actions={
           automation && (
             <div className="flex gap-2">
@@ -218,20 +230,22 @@ function Weekly() {
               <Button icon={<Pencil size={16} />} onClick={() => edit(automation)}>
                 Configurar
               </Button>
-              <Button variant="primary" icon={<Download size={16} />} loading={busy} onClick={runNow}>
+              <Button variant="primary" icon={<Download size={16} />} loading={busy} disabled={!automation.active || !automation.instagramAccountId || !s?.musicCount} onClick={runNow}>
                 Baixar a semana agora
               </Button>
             </div>
           )
         }
       />
+      <TelegramConnection />
+      <DriveMusicLibrary automationId={automation?.id} initialFolder={automation?.musicDriveFolder} onImported={folder => { setForm(previous => ({ ...previous, musicDriveFolder: folder })); void status.reload(); void autos.reload() }} />
       {s && (!s.telegramConfigured || !s.audioToolsReady || s.musicCount === 0) && (
         <Card className="mb-5 p-4">
           <p className="font-medium">Pendências no servidor</p>
           <ul className="mt-1 list-disc pl-5 text-sm text-muted">
             {!s.telegramConfigured && <li>Sessão do Telegram não configurada.</li>}
-            {!s.audioToolsReady && <li>Ferramentas de áudio (Demucs e Whisper) não encontradas em tools/venv.</li>}
-            {s.musicCount === 0 && <li>A biblioteca de músicas está vazia. Coloque arquivos de áudio em {s.musicDir} ou configure a pasta de músicas do Drive e use “Sincronizar músicas”.</li>}
+            {!s.audioToolsReady && <li>O processamento de áudio está indisponível. Entre em contato com o administrador.</li>}
+            {s.musicCount === 0 && <li>A biblioteca de músicas está vazia. Use “Importar músicas do Drive” acima antes de preparar os vídeos.</li>}
           </ul>
         </Card>
       )}
@@ -249,14 +263,18 @@ function Weekly() {
 
       {(editing || (!autos.loading && !automation)) && (
         <Card className="mb-6 p-5">
-          <h2 className="mb-4 text-lg font-semibold">{automation ? 'Configuração' : 'Criar a semana automática'}</h2>
+          <h2 className="mb-4 text-lg font-semibold">{automation ? 'Configuração' : 'Configurar publicação automática'}</h2>
           <form onSubmit={save} className="grid gap-5 md:grid-cols-2">
             <Field label="Nome" error={fields.name}>
               {(id) => <Input id={id} required maxLength={100} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />}
             </Field>
-            <Field label="Canais do Telegram" hint="Um por linha: @canal ou ID -100…. Entram os vídeos postados nos últimos 7 dias. Use este campo e/ou as pastas do Drive." error={fields.sources}>
+            <Field label="Canais do Telegram" hint="Um por linha: @canal ou ID -100…. Escolha abaixo se deseja importar também o histórico antigo. Use este campo e/ou as pastas do Drive." error={fields.sources}>
               {(id) => <Textarea id={id} rows={3} value={form.sources} onChange={(e) => setForm({ ...form, sources: e.target.value })} />}
             </Field>
+            <div className="flex items-center gap-3">
+              <Toggle checked={form.includeHistory} label="Importar vídeos antigos do Telegram" onChange={value => setForm({ ...form, includeHistory: value })} />
+              <span className="text-sm">Importar também os vídeos antigos</span>
+            </div>
             <Field label="Pastas do Google Drive com vídeos" hint="Um link ou ID por linha. Entram os vídeos ainda não usados, do mais antigo ao mais novo. Compartilhe cada pasta (Leitor) com a conta de serviço." error={fields.driveFolders}>
               {(id) => <Textarea id={id} rows={3} placeholder="https://drive.google.com/drive/folders/…" value={form.driveFolders} onChange={(e) => setForm({ ...form, driveFolders: e.target.value })} />}
             </Field>
@@ -273,10 +291,10 @@ function Weekly() {
                 </Select>
               )}
             </Field>
-            <Field label="Conta do Instagram" hint="Opcional. Sem conta, publica só no YouTube." error={fields.instagramAccountId}>
+            <Field label="Conta do Instagram" hint="Os mesmos três vídeos serão agendados como Reels neste perfil." error={fields.instagramAccountId}>
               {(id) => (
-                <Select id={id} value={form.instagramAccountId} onChange={(e) => setForm({ ...form, instagramAccountId: e.target.value })}>
-                  <option value="">Não publicar no Instagram</option>
+                <Select id={id} required={form.active} value={form.instagramAccountId} onChange={(e) => setForm({ ...form, instagramAccountId: e.target.value })}>
+                  <option value="">Selecione um perfil conectado</option>
                   {accounts.filter((a) => a.status === 'connected').map((a) => (
                     <option key={a.id} value={a.id}>@{a.username}</option>
                   ))}
@@ -346,7 +364,7 @@ function Weekly() {
             ) : weekData.error && !w ? (
               <ErrorCard onRetry={weekData.reload} />
             ) : !w || !w.items.length ? (
-              <EmptyState text="Nenhum vídeo preparado para esta semana. A preparação roda no domingo, ou use “Baixar a semana agora”." />
+              <EmptyState text="Nenhum vídeo preparado. Configure a origem, os destinos e as músicas; depois use “Baixar a semana agora”." />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[56rem] table-fixed border-separate border-spacing-1 text-sm">
@@ -372,6 +390,7 @@ function Weekly() {
                                 <div className="space-y-1">
                                   <StatusTag status={item.status} />
                                   <p className="line-clamp-3 break-words">{item.title}</p>
+                                  <ContentDetails item={item} />
                                   {item.youtube && (
                                     <p className="text-xs text-muted">
                                       YouTube: {ytLabels[item.youtube.status] ?? item.youtube.status}
@@ -409,6 +428,7 @@ function Weekly() {
                   <li key={i.id} className="flex flex-wrap items-center gap-3 py-3">
                     <div className="min-w-0 flex-1 basis-56">
                       <p className="break-words text-sm">{i.title || i.caption || `${i.telegramChat} · mensagem ${i.messageId}`}</p>
+                      <ContentDetails item={i} />
                       {i.error && <p className="mt-1 text-sm text-negative">{i.error}</p>}
                     </div>
                     <StatusTag status={i.status} />
@@ -426,4 +446,18 @@ function Weekly() {
       )}
     </div>
   )
+}
+
+function ContentDetails({ item }: { item: Item }) {
+  if (!item.transcript && !item.title && !item.musicFile) return null
+  return <details className="mt-2 text-sm">
+    <summary className="cursor-pointer text-muted">Textos, transcrição e música</summary>
+    <div className="mt-2 space-y-3 break-words">
+      {item.musicFile && <p><strong>Música:</strong> {item.musicFile}</p>}
+      {item.title && <div><p className="font-medium">YouTube</p><p>{item.title}</p><p>{item.description}</p><p>{item.hashtags?.join(' ')}</p><p className="text-muted">Palavras-chave: {item.keywords?.join(', ')}</p></div>}
+      {item.instagramTitle && <div><p className="font-medium">Instagram</p><p>{item.instagramTitle}</p><p>{item.instagramDescription}</p><p>{item.instagramHashtags?.join(' ')}</p></div>}
+      {item.titleEvidence && <p><strong>Base da promessa:</strong> “{item.titleEvidence}”</p>}
+      {item.transcript && <div><p className="font-medium">Transcrição</p><p className="max-h-48 overflow-y-auto whitespace-pre-wrap">{item.transcript}</p></div>}
+    </div>
+  </details>
 }

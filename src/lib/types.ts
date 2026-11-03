@@ -190,7 +190,7 @@ export type YoutubeChannel = {
   connectedAt: string
 }
 
-export type YoutubeStatus = 'draft' | 'queued' | 'uploading' | 'processing' | 'scheduled' | 'published' | 'failed' | 'cancelled'
+export type YoutubeStatus = 'draft' | 'queued' | 'uploading' | 'processing' | 'scheduled' | 'uploaded' | 'published' | 'failed' | 'cancelled'
 export type YoutubePrivacy = 'private' | 'unlisted' | 'public'
 export type YoutubeFormat = 'long' | 'short'
 

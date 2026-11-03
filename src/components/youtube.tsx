@@ -37,6 +37,7 @@ const statusMeta: Record<YoutubeStatus, { tone: 'neutral' | 'brand' | 'warning' 
   uploading: { tone: 'warning', label: 'Enviando', Icon: Loader2, spin: true },
   processing: { tone: 'warning', label: 'Processando no YouTube', Icon: Loader2, spin: true },
   scheduled: { tone: 'brand', label: 'Agendado', Icon: CalendarClock },
+  uploaded: { tone: 'neutral', label: 'Enviado · Privado', Icon: CheckCircle2 },
   published: { tone: 'success', label: 'Publicado', Icon: CheckCircle2 },
   failed: { tone: 'error', label: 'Falhou', Icon: AlertCircle },
   cancelled: { tone: 'neutral', label: 'Cancelado', Icon: Ban },

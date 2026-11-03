@@ -31,7 +31,7 @@ const nets: { id: Net; label: string }[] = [
 const typeLabel = { post: 'Post', reel: 'Reel', carousel: 'Carrossel' }
 const onInstagram = (p: Post) => p.destination !== 'facebook'
 const onFacebook = (p: Post) => p.destination === 'facebook' || p.destination === 'both'
-const countedVideo = (v: YoutubeVideo) => ['scheduled', 'published', 'uploading', 'processing', 'queued', 'failed'].includes(v.status)
+const countedVideo = (v: YoutubeVideo) => ['scheduled', 'uploaded', 'published', 'uploading', 'processing', 'queued', 'failed'].includes(v.status)
 
 function Stat({ label, value, detail, danger }: { label: string; value: number; detail?: string; danger?: boolean }) {
   return (

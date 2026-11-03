@@ -17,7 +17,6 @@ const QuizSettingsPage = lazy(() => import('./pages/QuizSettingsPage'))
 const QuizProductionsPage = lazy(() => import('./pages/QuizProductionsPage'))
 const QuizProductionDetailPage = lazy(() => import('./pages/QuizProductionDetailPage'))
 const QuizTemplatePage = lazy(() => import('./pages/QuizTemplatePage'))
-const TelegramAutomationsPage = lazy(() => import('./pages/TelegramAutomationsPage'))
 const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
@@ -113,8 +112,9 @@ export default function App() {
               <Route path="automacoes/nova" element={<AutomationEditorPage />} />
               <Route path="automacoes/:id" element={<AutomationDetailPage />} />
               <Route path="automacoes/:id/editar" element={<AutomationEditorPage key="edit" />} />
-              <Route path="semana-automatica" element={<RequireAdmin><WeeklyPage /></RequireAdmin>} />
-              <Route path="automacoes-telegram" element={<RequireAdmin><TelegramAutomationsPage /></RequireAdmin>} />
+              <Route path="semana-automatica" element={<Navigate to="/integracoes/telegram" replace />} />
+              <Route path="integracoes/telegram" element={<RequireAdmin><WeeklyPage /></RequireAdmin>} />
+              <Route path="automacoes-telegram" element={<Navigate to="/integracoes/telegram" replace />} />
               <Route path="youtube/analises" element={<YoutubeAnalyticsPage />} />
               <Route path="videos" element={<VideosPage />} />
               <Route path="videos/novo" element={<VideoEditorPage />} />
