@@ -50,6 +50,8 @@ export type PostStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'f
 export type PostDestination = 'instagram' | 'facebook' | 'both'
 
 export type Post = {
+  seoTitle?: string
+  seoKeywords?: string[]
   destination?: PostDestination
   facebookPageId?: string
   fbPostId?: string

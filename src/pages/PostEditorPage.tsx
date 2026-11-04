@@ -9,6 +9,7 @@ import type { MediaItem, Post, PostType, PostDestination } from '../lib/types'
 import { Button, Card, ConfirmDialog, ErrorCard, Field, FormError, Input, PageHeader, PostStatusTag, Select, Skeleton, Textarea } from '../components/ui'
 import { ConversionTag, MediaThumb, Uploader, useMediaStatus } from '../components/media'
 import { LimitBanner, ReconnectBanners } from '../components/AccountBanners'
+import { SeoGenerator } from '../components/SeoGenerator'
 import { useToast } from '../components/toast'
 import { publicationPending, publicationStatus, publicationMessage } from '../lib/publication'
 import { useBeforeUnload } from '../components/useDirtyGuard'
@@ -49,6 +50,8 @@ export default function PostEditorPage() {
   const [type, setType] = useState<PostType>('post')
   const [selected, setSelected] = useState<string[]>([])
   const [caption, setCaption] = useState('')
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoKeywords, setSeoKeywords] = useState<string[]>([])
   const [date, setDate] = useState(() => defaultWhen(tz).date)
   const [time, setTime] = useState(() => defaultWhen(tz).time)
   const [library, setLibrary] = useState<MediaItem[]>([])
@@ -77,6 +80,8 @@ export default function PostEditorPage() {
         setType(r.data.type)
         setSelected(r.data.mediaIds)
         setCaption(r.data.caption)
+        setSeoTitle(r.data.seoTitle ?? '')
+        setSeoKeywords(r.data.seoKeywords ?? [])
         const p = zonedParts(r.data.scheduledAt, tz)
         setDate(p.date)
         setTime(p.time)
@@ -206,6 +211,8 @@ export default function PostEditorPage() {
       type,
       mediaIds: selected,
       caption,
+      seoTitle,
+      seoKeywords: seoKeywords.map(k => k.trim()).filter(Boolean),
       status: now ? 'scheduled' : status,
       ...(now ? { publishNow: true } : { scheduledAt: zonedToUtc(date, time, tz) }),
     }
@@ -393,6 +400,12 @@ export default function PostEditorPage() {
               </details>
             )}
           </div>
+
+          <SeoGenerator key={`${id ?? 'new'}:${selected.join(',')}:${destination}`} mediaIds={selected} context={caption}
+            platform={destination === 'facebook' ? 'facebook' : 'instagram'} disabled={Boolean(locked) || saving !== null}
+            onApply={draft => { setCaption(`${draft.title}\n\n${draft.description}`); setSeoTitle(draft.title); setSeoKeywords(draft.keywords); touch() }} />
+          <Field label="Título SEO">{fid => <Input id={fid} maxLength={100} value={seoTitle} onChange={e => { setSeoTitle(e.target.value); touch() }} />}</Field>
+          <Field label="Keywords (palavras-chave)" hint="Guardadas com a publicação para consulta e planejamento.">{fid => <Input id={fid} value={seoKeywords.join(', ')} onChange={e => { setSeoKeywords(e.target.value.split(',')); touch() }} />}</Field>
 
           <Field label="Legenda" error={error.fields.caption} hint={`${caption.length} de 2.200 caracteres`}>
             {(fid, d) => <Textarea id={fid} aria-describedby={d} aria-invalid={Boolean(error.fields.caption) || caption.length > 2200} rows={6} value={caption} onChange={(e) => (touch(), setCaption(e.target.value))} />}

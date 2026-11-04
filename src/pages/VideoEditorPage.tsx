@@ -11,6 +11,7 @@ import { Button, Card, EmptyState, ErrorCard, Field, FormError, Input, PageHeade
 import { YoutubeReconnectBanners } from '../components/AccountBanners'
 import { Chip, Counter, Progress, RadioCard, Section, Thumb } from '../components/youtube'
 import { useBeforeUnload } from '../components/useDirtyGuard'
+import { SeoGenerator } from '../components/SeoGenerator'
 import { useToast } from '../components/toast'
 
 type Errors = Record<string, string>
@@ -575,6 +576,8 @@ export default function VideoEditorPage() {
         <Card>
           <EmptyState text="Conecte um canal do YouTube para enviar vídeos." action={<Button variant="primary" onClick={() => navigate('/contas?aba=youtube')}>Ir para Contas</Button>} />
         </Card>
+        <div className="mt-4"><SeoGenerator context={[title, description].join('\n')} platform="youtube" format={format}
+          onApply={draft => { setTitle(draft.title); setDescription(draft.description); setTags(draft.keywords); setDirty(true) }} /></div>
       </div>
     )
   }
@@ -635,6 +638,10 @@ export default function VideoEditorPage() {
               </>
             )}
           </Section>
+
+          <SeoGenerator key={`${id ?? 'new'}:${media?.id ?? ''}:${format}`} mediaIds={media ? [media.id] : []} videoId={id}
+            context={[title, description].filter(Boolean).join('\n')} platform="youtube" format={format} disabled={saving !== null || sending}
+            onApply={draft => { setTitle(draft.title); setDescription(draft.description); setTags(draft.keywords); setDirty(true) }} />
 
           {ready && (
             <>

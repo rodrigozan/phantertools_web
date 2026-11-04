@@ -1,3 +1,4 @@
+import { SeoGenerator } from '../components/SeoGenerator'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, GripVertical, Lock, Plus, X } from 'lucide-react'
@@ -13,7 +14,7 @@ import { useToast } from '../components/toast'
 import { useBeforeUnload } from '../components/useDirtyGuard'
 import { addDays } from '../components/WeekCalendar'
 
-type Row = { media: MediaItem; caption: string; scheduledAt?: string; fixed: boolean }
+type Row = { seoTitle?: string; seoKeywords?: string[]; media: MediaItem; caption: string; scheduledAt?: string; fixed: boolean }
 type PreviewItem = { mediaId: string; caption: string; fixed: boolean; scheduledAt: string }
 
 export default function BatchNewPage() {
@@ -79,7 +80,7 @@ export default function BatchNewPage() {
     days: mode === 'daily' ? [] : days,
     times,
     startDate,
-    items: list.map((r) => ({ mediaId: r.media.id, caption: r.caption, scheduledAt: r.fixed ? r.scheduledAt : undefined })),
+    items: list.map((r) => ({ mediaId: r.media.id, caption: r.caption, seoTitle: r.seoTitle, seoKeywords: r.seoKeywords, scheduledAt: r.fixed ? r.scheduledAt : undefined })),
   })
 
   const preview = async (list = rows) => {
@@ -291,6 +292,11 @@ export default function BatchNewPage() {
                         <ConversionTag status={r.media.conversionStatus} />
                       </div>
                       <Textarea aria-label={`Legenda de ${r.media.originalName}`} aria-invalid={Boolean(error.fields[`items.${i}.caption`])} rows={2} className="min-h-16" value={r.caption} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} />
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-sm font-medium">Gerar metadados SEO</summary>
+                        <div className="mt-3"><SeoGenerator mediaIds={[r.media.id]} context={r.caption || defaultCaption} platform="instagram" disabled={confirming || calculating}
+                          onApply={draft => setRows(current => current.map(x => x.media.id === r.media.id ? { ...x, caption: `${draft.title}\n\n${draft.description}`, seoTitle: draft.title, seoKeywords: draft.keywords } : x))} /></div>
+                      </details>
                       <span className={`text-xs tabular-nums ${r.caption.length > 2200 ? 'text-negative' : 'text-faint'}`}>{r.caption.length} de 2.200</span>
                     </div>
                     <div className="flex flex-col gap-1">

@@ -1,3 +1,4 @@
+import { SeoGenerator } from '../components/SeoGenerator'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ExternalLink, Info, Pencil, RotateCcw, Upload } from 'lucide-react'
@@ -201,22 +202,6 @@ export default function VideoDetailPage() {
     } catch (e) { toast({ tone: 'error', text: errorInfo(e).message }) }
     finally { setManaging(false) }
   }
-  const generateSeo = async () => {
-    setManaging(true)
-    try {
-      await api.post(`/youtube/videos/${v.id}/seo`)
-      type SeoJob = { status: string; error?: string; draft?: { title: string; description: string; tags: string[]; titleEvidence: string } }
-      let job: SeoJob
-      do {
-        await new Promise(resolve => setTimeout(resolve, 2500))
-        job = (await api.get<SeoJob>(`/youtube/videos/${v.id}/seo`)).data
-      } while (job.status === 'processing')
-      if (job.status !== 'completed' || !job.draft) throw new Error(job.error || 'Não foi possível concluir a análise.')
-      setTitle(job.draft.title); setDescription(job.draft.description); setTags(job.draft.tags); setEvidence(job.draft.titleEvidence)
-      toast({ tone: 'success', text: 'SEO gerado pela fala. Revise os textos e salve para aplicar ao YouTube.' })
-    } catch (e) { toast({ tone: 'error', text: e instanceof Error && !('response' in e) ? e.message : errorInfo(e).message }) }
-    finally { setManaging(false) }
-  }
 
   const replaceThumb = async (file: File) => {
     if (!/^image\/(png|jpeg)$/.test(file.type)) return toast({ tone: 'error', text: 'A thumbnail precisa ser PNG ou JPG.' })
@@ -352,7 +337,8 @@ export default function VideoDetailPage() {
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_384px]">
           <div className="flex flex-col gap-4">
             <Section title="Título, descrição e tags" hint="Editar aqui altera o vídeo no YouTube. A visibilidade e a data não mudam.">
-              <Button loading={managing} onClick={generateSeo}>Gerar SEO pela transcrição</Button>
+              <SeoGenerator key={v.id} videoId={v.id} context={[title, description].join('\n')} platform="youtube" format={v.format ?? 'long'} disabled={saving || managing}
+                onApply={draft => { setTitle(draft.title); setDescription(draft.description); setTags(draft.keywords); setEvidence(draft.titleEvidence ?? '') }} />
               {evidence && <p className="text-sm">Base na fala: “{evidence}”</p>}
               <Field label="Título" error={fieldErrors.title}>
                 {(fid, d) => (
