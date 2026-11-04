@@ -7,7 +7,7 @@ import { formatBytes, formatDateTime } from '../lib/format'
 import { DESCRIPTION_MAX_BYTES, THUMB_MAX_BYTES, TAGS_MAX_CHARS, TITLE_MAX, byteLength, categoryLabel, languageLabel, studioUrl, tagsLength } from '../lib/youtube'
 import { useYoutubeChannels } from '../lib/youtubeChannels'
 import type { YoutubeVideo } from '../lib/types'
-import { Button, Card, ConfirmDialog, ErrorCard, Field, Input, PageHeader, Skeleton, Textarea } from '../components/ui'
+import { Button, Card, ConfirmDialog, ErrorCard, Field, Input, PageHeader, Skeleton, Select, Textarea } from '../components/ui'
 import { YoutubeReconnectBanners } from '../components/AccountBanners'
 import { Chip, Counter, FormatTag, Notice, Progress, Section, Steps, Thumb, YtStatusTag, type Step } from '../components/youtube'
 import { useToast } from '../components/toast'
@@ -60,6 +60,10 @@ export default function VideoDetailPage() {
   const [tagInput, setTagInput] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [result, setResult] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
+  const [privacy, setPrivacy] = useState<'private' | 'unlisted' | 'public'>('private')
+  const [publishDate, setPublishDate] = useState('')
+  const [managing, setManaging] = useState(false)
+  const [evidence, setEvidence] = useState('')
   const [saving, setSaving] = useState(false)
   const [busy, setBusy] = useState<'retry' | 'discard' | 'thumb' | 'thumbRetry' | null>(null)
   const [confirm, setConfirm] = useState<'retry' | 'discard' | null>(null)
@@ -69,6 +73,8 @@ export default function VideoDetailPage() {
   const adopt = useCallback((v: YoutubeVideo, resetForm: boolean) => {
     setVideo(v)
     if (resetForm) {
+      setPrivacy(v.privacyStatus ?? 'private')
+      setPublishDate(v.publishAt ? new Date(v.publishAt).toISOString().slice(0, 16) : '')
       setTitle(v.title)
       setDescription(v.description ?? '')
       setTags(v.tags ?? [])
@@ -184,6 +190,32 @@ export default function VideoDetailPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const visibility = async () => {
+    setManaging(true)
+    try {
+      await api.patch(`/youtube/videos/${v.youtubeVideoId}/visibility`, { channelId: v.channelId, privacyStatus: privacy, publishAt: publishDate ? new Date(publishDate + 'Z').toISOString() : null })
+      await load()
+      toast({ tone: 'success', text: 'Visibilidade confirmada no YouTube.' })
+    } catch (e) { toast({ tone: 'error', text: errorInfo(e).message }) }
+    finally { setManaging(false) }
+  }
+  const generateSeo = async () => {
+    setManaging(true)
+    try {
+      await api.post(`/youtube/videos/${v.id}/seo`)
+      type SeoJob = { status: string; error?: string; draft?: { title: string; description: string; tags: string[]; titleEvidence: string } }
+      let job: SeoJob
+      do {
+        await new Promise(resolve => setTimeout(resolve, 2500))
+        job = (await api.get<SeoJob>(`/youtube/videos/${v.id}/seo`)).data
+      } while (job.status === 'processing')
+      if (job.status !== 'completed' || !job.draft) throw new Error(job.error || 'Não foi possível concluir a análise.')
+      setTitle(job.draft.title); setDescription(job.draft.description); setTags(job.draft.tags); setEvidence(job.draft.titleEvidence)
+      toast({ tone: 'success', text: 'SEO gerado pela fala. Revise os textos e salve para aplicar ao YouTube.' })
+    } catch (e) { toast({ tone: 'error', text: e instanceof Error && !('response' in e) ? e.message : errorInfo(e).message }) }
+    finally { setManaging(false) }
   }
 
   const replaceThumb = async (file: File) => {
@@ -320,6 +352,8 @@ export default function VideoDetailPage() {
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_384px]">
           <div className="flex flex-col gap-4">
             <Section title="Título, descrição e tags" hint="Editar aqui altera o vídeo no YouTube. A visibilidade e a data não mudam.">
+              <Button loading={managing} onClick={generateSeo}>Gerar SEO pela transcrição</Button>
+              {evidence && <p className="text-sm">Base na fala: “{evidence}”</p>}
               <Field label="Título" error={fieldErrors.title}>
                 {(fid, d) => (
                   <div className="flex flex-col gap-1">
@@ -409,9 +443,12 @@ export default function VideoDetailPage() {
                     ? `${privacyLabel[v.privacyStatus]} no YouTube.`
                     : ''}
               </p>
-              <p className="mt-3 flex items-start gap-1.5 text-xs text-faint">
-                <Info size={13} className="mt-0.5 shrink-0" aria-hidden /> Por enquanto, para mudar a visibilidade use o YouTube Studio.
-              </p>
+              <div className="mt-4 flex flex-col gap-3">
+                <Field label="Visibilidade no YouTube">{fid => <Select id={fid} value={privacy} onChange={e => { setPrivacy(e.target.value as typeof privacy); setPublishDate('') }}><option value="private">Privado</option><option value="unlisted">Não listado</option><option value="public">Público</option></Select>}</Field>
+                {privacy === 'private' && <Field label="Agendar publicação (UTC)">{fid => <Input id={fid} type="datetime-local" value={publishDate} onChange={e => setPublishDate(e.target.value)} />}</Field>}
+                <p className="text-sm text-muted">Deixe a data vazia para manter privado. O YouTube permite agendar vídeos que nunca foram publicados.</p>
+                <Button loading={managing} onClick={visibility}>Aplicar visibilidade</Button>
+              </div>
             </Card>
           </div>
         </div>

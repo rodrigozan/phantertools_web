@@ -65,17 +65,36 @@ export default function VideosPage() {
   const [channelId, setChannelId] = useState('')
   const [status, setStatus] = useState('')
   const [format, setFormat] = useState('')
-  const [period, setPeriod] = useState('30')
+  const [period, setPeriod] = useState('')
   const [retrying, setRetrying] = useState<string | null>(null)
 
+  const [page, setPage] = useState(0)
+  useEffect(() => setPage(0), [channelId, status, format, period])
+  const [syncing, setSyncing] = useState(false)
+  const sync = async () => {
+    setSyncing(true)
+    try {
+      for (const ch of channels.filter(c => !channelId || c.channelId === channelId)) {
+        let pageToken: string | undefined
+        do {
+          const r = await api.post<{ nextPageToken?: string }>(`/youtube/channels/${ch.id}/sync`, { pageToken })
+          pageToken = r.data.nextPageToken
+        } while (pageToken)
+      }
+      await reloadList()
+      toast({ tone: 'success', text: 'Histórico do YouTube sincronizado.' })
+    } catch (e) { toast({ tone: 'error', text: errorInfo(e).message }) }
+    finally { setSyncing(false) }
+  }
+
   const url = useMemo(() => {
-    const q = new URLSearchParams()
+    const q = new URLSearchParams({ offset: String(page * 200) })
     if (channelId) q.set('channelId', channelId)
     if (status) q.set('status', status)
     if (format) q.set('format', format)
     if (period) q.set('from', new Date(Date.now() - Number(period) * 86_400_000).toISOString())
     return `/youtube/videos?${q}`
-  }, [channelId, status, format, period])
+  }, [channelId, status, format, period, page])
 
   const list = useFetch<YoutubeVideo[]>(url)
   const quota = useFetch<YoutubeQuota>('/youtube/quota')
@@ -127,6 +146,7 @@ export default function VideosPage() {
     <div>
       <YoutubeReconnectBanners context="videos" />
       <PageHeader title="Vídeos" description="Envios para o YouTube." actions={exhausted ? <span title={`Cota esgotada até as ${formatReset(quota.data!.resetsAt, tz)}`}>{newButton}</span> : newButton} />
+      <div className="mb-4"><Button disabled={!channels.length} loading={syncing} onClick={sync}>Sincronizar vídeos do YouTube</Button></div>
       {list.loading && !list.data ? (
         <>
           <Skeleton className="mb-4 h-24 w-full" />
@@ -213,6 +233,11 @@ export default function VideosPage() {
               </ul>
             )}
           </Card>
+          <div className="mt-4 flex items-center gap-3">
+            <Button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Anteriores</Button>
+            <span className="text-sm">Página {page + 1}</span>
+            <Button disabled={items.length < 200} onClick={() => setPage(p => p + 1)}>Próximos</Button>
+          </div>
         </>
       )}
     </div>
