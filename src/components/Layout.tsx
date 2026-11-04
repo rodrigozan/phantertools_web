@@ -2,7 +2,7 @@ import { AppBrand } from './AppBrand'
 import { APP_NAME } from '../lib/appConfig'
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, Bell, CalendarDays, Clapperboard, Folder, Images, LayoutDashboard, Layers, Link2, LogOut, Menu, MessageCircle, Settings, Shield, WifiOff, X } from 'lucide-react'
+import { BarChart3, Bell, CalendarDays, Clapperboard, Folder, Images, LayoutDashboard, Layers, Link2, LogOut, Menu, MessageCircle, Settings, Shield, Sparkles, WifiOff, X } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { NotificationBell } from './NotificationBell'
@@ -31,7 +31,7 @@ export const navGroups: NavGroup[] = [
     ],
   },
   { title: 'YouTube', items: [{ to: '/videos', label: 'Vídeos', Icon: Clapperboard }, { to: '/youtube/analises', label: 'Análises', Icon: BarChart3 }] },
-  { title: 'Integrações', items: [{ to: '/integracoes/google-drive', label: 'Google Drive', Icon: Folder, }, { to: '/integracoes/telegram', label: 'Telegram · Instagram e YouTube', Icon: MessageCircle, admin: true }] },
+  { title: 'Integrações', items: [{ to: '/integracoes/google-drive', label: 'Google Drive', Icon: Folder, }, { to: '/integracoes/telegram', label: 'Telegram · Instagram e YouTube', Icon: MessageCircle, admin: true }, { to: '/integracoes/provedores', label: 'Provedores de IA', Icon: Sparkles, admin: true }] },
   { title: 'Quiz Factory', items: [
     { to: '/quiz', label: 'Visão geral', Icon: LayoutDashboard },
     { to: '/quiz/producoes', label: 'Produções', Icon: Clapperboard },

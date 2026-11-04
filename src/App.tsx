@@ -19,6 +19,7 @@ const QuizProductionDetailPage = lazy(() => import('./pages/QuizProductionDetail
 const QuizTemplatePage = lazy(() => import('./pages/QuizTemplatePage'))
 const GoogleDrivePage = lazy(() => import('./pages/GoogleDrivePage'))
 const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
+const ProvidersPage = lazy(() => import('./pages/ProvidersPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
@@ -116,6 +117,7 @@ export default function App() {
               <Route path="semana-automatica" element={<Navigate to="/integracoes/telegram" replace />} />
               <Route path="integracoes/google-drive" element={<GoogleDrivePage />} />
               <Route path="integracoes/telegram" element={<RequireAdmin><WeeklyPage /></RequireAdmin>} />
+              <Route path="integracoes/provedores" element={<RequireAdmin><ProvidersPage /></RequireAdmin>} />
               <Route path="automacoes-telegram" element={<Navigate to="/integracoes/telegram" replace />} />
               <Route path="youtube/analises" element={<YoutubeAnalyticsPage />} />
               <Route path="videos" element={<VideosPage />} />
