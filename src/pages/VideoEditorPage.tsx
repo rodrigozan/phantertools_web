@@ -328,6 +328,8 @@ export default function VideoEditorPage() {
   const [schedule, setSchedule] = useState(false)
   const [date, setDate] = useState(() => defaultWhen(tz).date)
   const [time, setTime] = useState(() => defaultWhen(tz).time)
+  const [telegramQueue, setTelegramQueue] = useState<YoutubeVideo[]>([])
+  const [claiming, setClaiming] = useState<string | null>(null)
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState<'draft' | 'publish' | null>(null)
@@ -348,6 +350,38 @@ export default function VideoEditorPage() {
   useEffect(() => {
     if (!channelId && usable.length) setChannelId(usable[0].channelId)
   }, [usable, channelId])
+
+  // Vídeos que o Telegram sincronizou para o canal e ainda não subiram ao YouTube.
+  useEffect(() => {
+    if (editing || !channelId) {
+      setTelegramQueue([])
+      return
+    }
+    let alive = true
+    api
+      .get<YoutubeVideo[]>(`/youtube/videos?channelId=${encodeURIComponent(channelId)}&status=queued,failed&limit=100`)
+      .then((r) => alive && setTelegramQueue(r.data.filter((v) => v.source === 'telegram' && !v.youtubeVideoId)))
+      .catch(() => alive && setTelegramQueue([]))
+    return () => {
+      alive = false
+    }
+  }, [editing, channelId])
+
+  // Escolher um vídeo do Telegram o tira da fila automática e abre o editor com o que já foi preparado.
+  const claimTelegram = async (v: YoutubeVideo) => {
+    if (claiming) return
+    setClaiming(v.id)
+    setFormError('')
+    try {
+      await api.post(`/youtube/videos/${v.id}/claim`)
+      setDirty(false)
+      navigate(`/videos/${v.id}/editar`)
+    } catch (err) {
+      setFormError(errorInfo(err).message ?? 'Não foi possível tirar o vídeo da fila.')
+      setTelegramQueue((q) => q.filter((x) => x.id !== v.id))
+      setClaiming(null)
+    }
+  }
 
   // Edição de rascunho, fila ou envio que falhou antes de chegar ao YouTube.
   useEffect(() => {
@@ -553,6 +587,39 @@ export default function VideoEditorPage() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_384px]">
         <div className="flex flex-col gap-4">
           <Section title="Vídeo">
+            {!editing && (
+              <Field label="Canal">
+                {(fid) => (
+                  <Select id={fid} value={channelId} onChange={(e) => touch(setChannelId)(e.target.value)}>
+                    {usable.map((c) => (
+                      <option key={c.id} value={c.channelId}>{c.title}</option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            )}
+            {!editing && telegramQueue.length > 0 && (
+              <div className="flex flex-col gap-2 rounded-control border border-border p-3">
+                <p className="text-sm font-medium">Do Telegram, ainda não enviados ({telegramQueue.length})</p>
+                <p className="text-xs text-muted">Ao escolher um, ele sai da fila automática e abre aqui para você editar e publicar.</p>
+                <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+                  {telegramQueue.map((v) => (
+                    <li key={v.id}>
+                      <button
+                        type="button"
+                        disabled={claiming !== null}
+                        onClick={() => claimTelegram(v)}
+                        className="flex w-full items-center gap-2 rounded-control p-2 text-left hover:bg-raised disabled:opacity-60"
+                      >
+                        <Film size={16} aria-hidden className="shrink-0 text-muted" />
+                        <span className="min-w-0 flex-1 truncate text-sm">{v.title}</span>
+                        <span className="text-xs text-muted">{claiming === v.id ? 'Abrindo…' : v.status === 'failed' ? 'Falhou' : v.format === 'short' ? 'Short' : 'Na fila'}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <VideoPicker media={media} onMedia={onMedia} library={library} onSending={setSending} error={errors.mediaId} />
             {media && ready && (
               <>
@@ -572,7 +639,7 @@ export default function VideoEditorPage() {
           {ready && (
             <>
               <Section title="Detalhes">
-                <Field label="Canal" error={errors.channelId}>
+                {editing && <Field label="Canal" error={errors.channelId}>
                   {(fid, d) => (
                     <Select id={fid} aria-describedby={d} value={channelId} onChange={(e) => touch(setChannelId)(e.target.value)}>
                       {(editing ? channels : usable).map((c) => (
@@ -580,7 +647,7 @@ export default function VideoEditorPage() {
                       ))}
                     </Select>
                   )}
-                </Field>
+                </Field>}
                 <Field label="Título" error={errors.title}>
                   {(fid, d) => (
                     <div className="flex flex-col gap-1">
