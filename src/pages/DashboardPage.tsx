@@ -164,6 +164,7 @@ export default function DashboardPage() {
               videos={shownVideos}
               accounts={accounts}
               timeZone={tz}
+              onRescheduled={async () => { await Promise.all([week.reload(), yt.reload(), dash.reload()]) }}
               extra={
                 <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por rede">
                   {nets.map((n) => (

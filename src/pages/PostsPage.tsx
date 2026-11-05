@@ -92,7 +92,7 @@ export default function PostsPage() {
             <ErrorCard onRetry={reload} />
           </div>
         ) : view === 'week' ? (
-          <WeekCalendar weekStart={weekStart} onChange={setWeekStart} posts={posts} accounts={accounts} timeZone={tz} />
+          <WeekCalendar weekStart={weekStart} onChange={setWeekStart} posts={posts} accounts={accounts} timeZone={tz} onRescheduled={reload} />
         ) : posts.length === 0 ? (
           <EmptyState
             text={dates.length ? "Nenhuma publicação nas datas selecionadas" : "Nenhuma publicação ainda"}
