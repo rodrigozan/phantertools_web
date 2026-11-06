@@ -15,7 +15,7 @@ type Provider = {
   preset: string | null
   command: string | null
   args: string[]
-  protocol: 'openai' | 'anthropic' | null
+  protocol: 'openai' | 'anthropic' | 'ollama' | null
   baseUrl: string | null
   model: string | null
   keySet: boolean
@@ -27,7 +27,8 @@ type Provider = {
 
 const PRESETS: Record<string, string> = { codex: 'Codex', claude: 'Claude Code', gemini: 'Gemini CLI', opencode: 'OpenCode', custom: 'Outra CLI' }
 const PROTOCOLS: Record<string, { label: string; url: string; hint: string }> = {
-  openai: { label: 'Compatível com OpenAI (OpenAI, Gemini, DeepSeek, OpenRouter, Ollama…)', url: 'https://api.openai.com/v1', hint: 'Ex.: gpt-5-mini, gemini-2.5-flash, deepseek-chat' },
+  openai: { label: 'Compatível com OpenAI (OpenAI, Gemini, DeepSeek, OpenRouter…)', url: 'https://api.openai.com/v1', hint: 'Ex.: gpt-5-mini, gemini-2.5-flash, deepseek-chat' },
+  ollama: { label: 'Ollama (local, sem chave)', url: 'http://127.0.0.1:11434', hint: 'Ex.: llama3.2:latest · usa a transcrição, sem imagens' },
   anthropic: { label: 'Anthropic (Claude)', url: 'https://api.anthropic.com/v1', hint: 'Ex.: claude-haiku-5-5' },
 }
 
@@ -37,7 +38,7 @@ type Form = {
   preset: string
   command: string
   args: string
-  protocol: 'openai' | 'anthropic'
+  protocol: 'openai' | 'anthropic' | 'ollama'
   baseUrl: string
   model: string
   apiKey: string
@@ -204,7 +205,7 @@ export default function ProvidersPage() {
                       </div>
                       <p className="mt-0.5 truncate text-sm text-muted">
                         {p.kind === 'api'
-                          ? `${p.model ?? 'sem modelo'} · chave ${p.keySet ? `…${p.keyLast4}` : 'não definida'}${p.baseUrl ? ` · ${p.baseUrl}` : ''}`
+                          ? `${p.model ?? 'sem modelo'} · ${p.protocol === 'ollama' ? 'local, sem chave' : `chave ${p.keySet ? `…${p.keyLast4}` : 'não definida'}`}${p.baseUrl ? ` · ${p.baseUrl}` : ''}`
                           : `${p.command || PRESETS[p.preset ?? 'custom']}${p.model ? ` · ${p.model}` : ''}`}
                       </p>
                       {p.lastError && <p className="mt-1 truncate text-xs text-faint" title={p.lastError}>Último erro: {p.lastError}</p>}
@@ -262,9 +263,9 @@ export default function ProvidersPage() {
                 <Field label="Modelo" error={errors.model} hint={PROTOCOLS[f.protocol].hint}>
                   {(id, d) => <Input id={id} aria-describedby={d} aria-invalid={Boolean(errors.model)} value={f.model} onChange={(e) => set({ model: e.target.value })} />}
                 </Field>
-                <Field label="Chave de API" error={errors.apiKey} hint={editing?.id ? 'Deixe em branco para manter a chave atual.' : undefined}>
+                {f.protocol !== 'ollama' && <Field label="Chave de API" error={errors.apiKey} hint={editing?.id ? 'Deixe em branco para manter a chave atual.' : undefined}>
                   {(id, d) => <Input id={id} aria-describedby={d} aria-invalid={Boolean(errors.apiKey)} type="password" autoComplete="off" value={f.apiKey} onChange={(e) => set({ apiKey: e.target.value })} placeholder={editing?.id ? '••••••••' : 'Cole a chave'} />}
-                </Field>
+                </Field>}
               </>
             ) : (
               <>
