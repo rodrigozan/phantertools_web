@@ -102,8 +102,8 @@ function TelegramAutomations() {
     setBusy(true)
     setFields({})
     try {
-      if (editingId) await api.patch(`/telegram/automations/${editingId}`, form)
-      else await api.post('/telegram/automations', form)
+      if (editingId) await api.patch(`/telegram/automations/${editingId}`, { ...form, privacyStatus: 'private' })
+      else await api.post('/telegram/automations', { ...form, privacyStatus: 'private' })
       setCreating(false)
       setEditingId(null)
       setForm(initial)
@@ -201,18 +201,11 @@ function TelegramAutomations() {
                 </Select>
               )}
             </Field>
-            <Field
-              label="Visibilidade"
-              hint="Público publica automaticamente. Privado permite conferir os vídeos no YouTube antes de liberar."
-            >
-              {(id) => (
-                <Select id={id} value={form.privacyStatus} onChange={(e) => setForm({ ...form, privacyStatus: e.target.value })}>
-                  <option value="private">Privado</option>
-                  <option value="unlisted">Não listado</option>
-                  <option value="public">Público</option>
-                </Select>
-              )}
-            </Field>
+            <p className="text-sm text-muted">
+              Cada vídeo passa por análise, SEO e tratamento de música antes de ser agendado.
+              O calendário do canal recebe até três vídeos por dia, às 9h, 14h e 20h (Brasília).
+              Se o dia estiver completo, a importação ocupa uma vaga no próximo dia.
+            </p>
             <Field
               label="Histórico inicial"
               hint="Zero começa a acompanhar na primeira verificação. Um número de 1 a 100 examina as últimas mensagens, incluindo as que não contêm vídeos."
@@ -300,7 +293,7 @@ function TelegramAutomations() {
                 </div>
                 <Tag tone="neutral">
                   {a.format === 'short' ? 'Short' : 'Longo'} ·{' '}
-                  {a.privacyStatus === 'public' ? 'Público' : a.privacyStatus === 'private' ? 'Privado' : 'Não listado'}
+                  Agendamento automático
                 </Tag>
                 <Button
                   onClick={() => {

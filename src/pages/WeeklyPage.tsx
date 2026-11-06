@@ -96,7 +96,7 @@ const dayLabel = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { ti
 const hourLabel = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })
 const weekLabel = (w: string) => `Semana de ${w.split('-').reverse().slice(0, 2).join('/')}`
 
-const emptyForm = { name: 'Semana automática', sources: '', includeHistory: true, driveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['07:00', '12:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
+const emptyForm = { name: 'Semana automática', sources: '', includeHistory: true, driveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['09:00', '14:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
 
 export default function WeeklyPage() {
   const { user } = useAuth()
@@ -219,7 +219,7 @@ function Weekly() {
     <div>
       <PageHeader
         title="Integração Telegram"
-        description="Transcrição, análise, textos para cada rede e suas músicas. Três vídeos por dia no Instagram e no YouTube, às 7h, 12h e 20h (Brasília)."
+        description="Transcrição, análise, textos para cada rede e suas músicas. Três vídeos por dia no Instagram e no YouTube, às 9h, 14h e 20h (Brasília), conforme as vagas do calendário."
         actions={
           automation && (
             <div className="flex gap-2">
@@ -299,6 +299,9 @@ function Weekly() {
                 </Select>
               )}
             </Field>
+            {form.sources.trim() ? (
+              <p className="text-sm text-muted">Telegram: até três vídeos por dia, às 9h, 14h e 20h (Brasília). A agenda considera todos os vídeos do canal e continua nos próximos dias quando as vagas acabam.</p>
+            ) : (
             <Field label="Horários de publicação (fuso de São Paulo)" hint="Valem para todos os dias, de segunda a domingo." error={fields.slotTimes}>
               {() => (
                 <div className="flex flex-wrap items-center gap-2">
@@ -320,6 +323,7 @@ function Weekly() {
                 </div>
               )}
             </Field>
+            )}
             <Field label="Preparar a semana no domingo às" hint="O download e o processamento começam neste horário." error={fields.runTime}>
               {(id) => <Input id={id} type="time" required value={form.runTime} onChange={(e) => setForm({ ...form, runTime: e.target.value })} />}
             </Field>
