@@ -2,7 +2,7 @@ import { AppBrand } from './AppBrand'
 import { APP_NAME } from '../lib/appConfig'
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, BookOpen, Bell, CalendarDays, Clapperboard, Folder, ImageIcon, Images, KeyRound, Music, LayoutDashboard, Layers, Link2, LogOut, Menu, MessageCircle, Settings, Shield, Sparkles, WifiOff, X } from 'lucide-react'
+import { Download, BarChart3, BookOpen, Bell, CalendarDays, Clapperboard, Folder, ImageIcon, Images, KeyRound, Music, LayoutDashboard, Layers, Link2, LogOut, Menu, MessageCircle, Settings, Shield, Sparkles, WifiOff, X } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { NotificationBell } from './NotificationBell'
@@ -18,6 +18,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { to: '/', label: 'Painel', Icon: LayoutDashboard },
       { to: '/midias', label: 'Mídias', Icon: Images },
+      { to: '/downloads', label: 'Downloads', Icon: Download },
       { to: '/avisos', label: 'Avisos', Icon: Bell },
     ],
   },

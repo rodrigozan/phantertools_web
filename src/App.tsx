@@ -30,6 +30,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
+const DownloadsPage = lazy(() => import('./pages/DownloadsPage'))
 const MediaPage = lazy(() => import('./pages/MediaPage'))
 const PostsPage = lazy(() => import('./pages/PostsPage'))
 const PostEditorPage = lazy(() => import('./pages/PostEditorPage'))
@@ -109,6 +110,7 @@ export default function App() {
               <Route path="quiz/templates" element={<div className="quiz-workspace"><QuizTemplatePage /></div>} />
               <Route index element={<DashboardPage />} />
               <Route path="contas" element={<AccountsPage />} />
+              <Route path="downloads" element={<DownloadsPage />} />
               <Route path="midias" element={<MediaPage />} />
               <Route path="publicacoes" element={<PostsPage />} />
               <Route path="publicacoes/nova" element={<PostEditorPage />} />
