@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { api, errorInfo } from '../lib/api'
 import { useFetch } from '../lib/useFetch'
 import { useToast } from '../components/toast'
-import { Banner, Button, Card, ErrorCard, Field, Input, PageHeader, SkeletonList, Tag } from '../components/ui'
+import { Banner, Button, Card, ErrorCard, Field, Input, PageHeader, Select, SkeletonList, Tag } from '../components/ui'
 
 type Setting = {
   key: string
@@ -14,10 +14,12 @@ type Setting = {
   last4: string | null
   value: string | null
   fallback: string | null
+  options: string[] | null
   fromEnv: boolean
 }
 
 const groupHelp: Record<string, string> = {
+  Voz: 'Reels e vídeos Phanterai: ElevenLabs, voz Rod. Histórias: você escolhe quem narra primeiro e o outro vira reserva. Quizzes: OpenRouter, com reserva no ElevenLabs (voz narrador).',
   Imagens: 'Capas e cenas geradas pelo Gemini.',
   Música: 'Suno é o principal; o Replicate entra quando o Suno falha.',
   Narrativas: 'Roteiro, voz e imagens das narrativas longas, tudo pelo OpenRouter.',
@@ -97,18 +99,32 @@ export default function StudioKeysPage() {
                     <Field key={s.key} label={s.label} error={errors[s.key]} hint={s.hint ?? undefined}>
                       {(id, desc) => (
                         <div className="flex flex-col gap-1.5">
+                          {s.options ? (
+                            <Select
+                              id={id}
+                              aria-describedby={desc}
+                              disabled={cleared.includes(s.key)}
+                              value={draft[s.key] ?? s.value ?? s.fallback ?? ''}
+                              onChange={(e) => edit(s, e.target.value)}
+                            >
+                              {s.options.map((o) => (
+                                <option key={o} value={o}>{o === 'openrouter' ? 'OpenRouter' : o === 'elevenlabs' ? 'ElevenLabs' : o}</option>
+                              ))}
+                            </Select>
+                          ) : (
                           <Input
-                            id={id}
-                            aria-describedby={desc}
-                            aria-invalid={Boolean(errors[s.key]) || undefined}
-                            type={s.secret ? 'password' : 'text'}
-                            autoComplete="off"
-                            spellCheck={false}
-                            placeholder={s.secret ? (s.set ? 'Colar para trocar' : 'Colar a chave') : (s.fallback ?? '')}
-                            disabled={cleared.includes(s.key)}
-                            value={cleared.includes(s.key) ? '' : (draft[s.key] ?? (s.secret ? '' : (s.value ?? '')))}
-                            onChange={(e) => edit(s, e.target.value)}
-                          />
+                              id={id}
+                              aria-describedby={desc}
+                              aria-invalid={Boolean(errors[s.key]) || undefined}
+                              type={s.secret ? 'password' : 'text'}
+                              autoComplete="off"
+                              spellCheck={false}
+                              placeholder={s.secret ? (s.set ? 'Colar para trocar' : 'Colar a chave') : (s.fallback ?? '')}
+                              disabled={cleared.includes(s.key)}
+                              value={cleared.includes(s.key) ? '' : (draft[s.key] ?? (s.secret ? '' : (s.value ?? '')))}
+                              onChange={(e) => edit(s, e.target.value)}
+                            />
+                          )}
                           <span className="flex flex-wrap items-center gap-1.5">
                             {cleared.includes(s.key) ? (
                               <Tag tone="error">Será apagada ao salvar</Tag>
