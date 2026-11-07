@@ -20,6 +20,12 @@ const QuizTemplatePage = lazy(() => import('./pages/QuizTemplatePage'))
 const GoogleDrivePage = lazy(() => import('./pages/GoogleDrivePage'))
 const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
 const ProvidersPage = lazy(() => import('./pages/ProvidersPage'))
+const StudioKeysPage = lazy(() => import('./pages/StudioKeysPage'))
+const StudioImagesPage = lazy(() => import('./pages/StudioImagesPage'))
+const StudioMusicPage = lazy(() => import('./pages/StudioMusicPage'))
+const StudioVideosPage = lazy(() => import('./pages/StudioVideosPage'))
+const StudioNarrativesPage = lazy(() => import('./pages/StudioNarrativesPage'))
+const StudioNarrativeDetailPage = lazy(() => import('./pages/StudioNarrativeDetailPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
@@ -118,6 +124,13 @@ export default function App() {
               <Route path="integracoes/google-drive" element={<GoogleDrivePage />} />
               <Route path="integracoes/telegram" element={<RequireAdmin><WeeklyPage /></RequireAdmin>} />
               <Route path="integracoes/provedores" element={<RequireAdmin><ProvidersPage /></RequireAdmin>} />
+              <Route path="integracoes/chaves" element={<RequireAdmin><StudioKeysPage /></RequireAdmin>} />
+              <Route path="estudio" element={<Navigate to="/estudio/imagens" replace />} />
+              <Route path="estudio/imagens" element={<RequireAdmin><StudioImagesPage /></RequireAdmin>} />
+              <Route path="estudio/musicas" element={<RequireAdmin><StudioMusicPage /></RequireAdmin>} />
+              <Route path="estudio/videos" element={<RequireAdmin><StudioVideosPage /></RequireAdmin>} />
+              <Route path="estudio/narrativas" element={<RequireAdmin><StudioNarrativesPage /></RequireAdmin>} />
+              <Route path="estudio/narrativas/:id" element={<RequireAdmin><StudioNarrativeDetailPage /></RequireAdmin>} />
               <Route path="automacoes-telegram" element={<Navigate to="/integracoes/telegram" replace />} />
               <Route path="youtube/analises" element={<YoutubeAnalyticsPage />} />
               <Route path="videos" element={<VideosPage />} />
