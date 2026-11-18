@@ -18,6 +18,7 @@ type Automation = {
   id: string
   name: string
   sources: string[]
+  publicDriveFolders?: string[]
   driveFolders: string[]
   includeHistory?: boolean
   musicDriveFolder?: string
@@ -96,7 +97,7 @@ const dayLabel = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { ti
 const hourLabel = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })
 const weekLabel = (w: string) => `Semana de ${w.split('-').reverse().slice(0, 2).join('/')}`
 
-const emptyForm = { name: 'Semana automática', sources: '', includeHistory: true, driveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['09:00', '14:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
+const emptyForm = { name: 'Semana automática', sources: '', includeHistory: true, driveFolders: '', publicDriveFolders: '', musicDriveFolder: '', channelId: '', instagramAccountId: '', slotTimes: ['09:00', '14:00', '20:00'], runTime: '06:00', musicVolumePct: 18, active: true }
 
 export default function WeeklyPage() {
   const { user } = useAuth()
@@ -133,7 +134,7 @@ function Weekly() {
   function edit(a?: Automation) {
     setForm(
       a
-        ? { name: a.name, sources: a.sources.join('\n'), includeHistory: a.includeHistory ?? true, driveFolders: a.driveFolders.join('\n'), musicDriveFolder: a.musicDriveFolder ?? '', channelId: a.channelId, instagramAccountId: a.instagramAccountId ?? '', slotTimes: a.slotTimes, runTime: a.runTime, musicVolumePct: a.musicVolumePct, active: a.active }
+        ? { name: a.name, sources: a.sources.join('\n'), includeHistory: a.includeHistory ?? true, driveFolders: a.driveFolders.join('\n'), publicDriveFolders: (a.publicDriveFolders ?? []).join('\n'), musicDriveFolder: a.musicDriveFolder ?? '', channelId: a.channelId, instagramAccountId: a.instagramAccountId ?? '', slotTimes: a.slotTimes, runTime: a.runTime, musicVolumePct: a.musicVolumePct, active: a.active }
         : emptyForm,
     )
     setFields({})
@@ -147,6 +148,7 @@ function Weekly() {
       name: form.name,
       includeHistory: form.includeHistory,
       sources: form.sources.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean),
+      publicDriveFolders: form.publicDriveFolders.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean),
       driveFolders: form.driveFolders.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean),
       musicDriveFolder: form.musicDriveFolder.trim() || null,
       channelId: form.channelId,
@@ -276,6 +278,9 @@ function Weekly() {
             <Field label="Pastas do Google Drive com vídeos" hint="Escolha as pastas da conta Google conectada. Os vídeos ainda não usados entram do mais antigo ao mais novo." error={fields.driveFolders}>
               {() => <DriveFolderField values={form.driveFolders.split('\n').filter(Boolean)} onChange={values => setForm({ ...form, driveFolders: values.join('\n') })} />}
             </Field>
+            <Field label="Pastas públicas do Drive com vídeos" hint="Cole um link por linha. Não exige conectar o Google Drive. Os vídeos entram pela ordem do nome, sem repetir arquivos já importados nesta automação." error={fields.publicDriveFolders}>
+              {(id) => <Textarea id={id} rows={3} placeholder="https://drive.google.com/drive/folders/…" value={form.publicDriveFolders} onChange={(e) => setForm({ ...form, publicDriveFolders: e.target.value })} />}
+            </Field>
             <Field label="Pasta de músicas" hint="As músicas desta pasta serão sincronizadas antes da preparação dos vídeos." error={fields.musicDriveFolder}>
               {() => <DriveFolderField single values={form.musicDriveFolder ? [form.musicDriveFolder] : []} onChange={values => setForm({ ...form, musicDriveFolder: values[0] ?? '' })} />}
             </Field>
@@ -346,7 +351,7 @@ function Weekly() {
         <>
           <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-muted">
             <Tag tone={automation.active ? 'success' : 'neutral'}>{automation.active ? 'Ativa' : 'Pausada'}</Tag>
-            <span>{[...automation.sources, ...automation.driveFolders.map(() => 'Google Drive')].join(', ')} → {channelName(automation.channelId)}{automation.instagramAccountId ? ' + Instagram' : ''}</span>
+            <span>{[...automation.sources, ...automation.driveFolders.map(() => 'Google Drive'), ...(automation.publicDriveFolders ?? []).map(() => 'Drive público')].join(', ')} → {channelName(automation.channelId)}{automation.instagramAccountId ? ' + Instagram' : ''}</span>
             <span>Música a {automation.musicVolumePct}%</span>
             {automation.lastRunAt && <span>Última preparação: {new Date(automation.lastRunAt).toLocaleString('pt-BR', { timeZone: TZ })}</span>}
           </div>
